@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach to Backend (5005)",
+      "type": "java",
+      "request": "attach",
+      "hostName": "localhost",
+      "port": 5005,
+      "preLaunchTask": "Run Backend (debuggable)"
+    },
+    {
+      "name": "Launch Backend (Java)",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.elibrary.ELibraryApplication",
+      "preLaunchTask": "Run Backend (via run_backend.bat)"
+    },
+    {
+      "name": "Open Frontend in Browser",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "preLaunchTask": "Run Frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Run Frontend and Backend",
+      "configurations": [
+        "Attach to Backend (5005)",
+        "Open Frontend in Browser"
+      ]
+    }
+  ]
+}

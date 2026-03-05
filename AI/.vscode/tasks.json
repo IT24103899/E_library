@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Backend (via run_backend.bat)",
+      "type": "shell",
+      "command": "cmd",
+      "args": ["/c", "${workspaceFolder}\\run_backend.bat"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Backend (debuggable)",
+      "type": "shell",
+      "command": "C:\\Program Files\\apache-maven-3.9.12\\bin\\mvn.cmd",
+      "args": [
+        "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+        "spring-boot:run"
+      ],
+      "options": { "cwd": "${workspaceFolder}\\E-Library\\backend" },
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["start"],
+      "options": { "cwd": "${workspaceFolder}\\E-Library\\frontend" },
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ]
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Backend (via run_backend.bat)",
+      "type": "shell",
+      "command": "cmd",
+      "args": ["/c", "${workspaceFolder}\\run_backend.bat"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Backend (debuggable)",
+      "type": "shell",
+      "command": "C:\\Program Files\\apache-maven-3.9.12\\bin\\mvn.cmd",
+      "args": [
+        "-Dspring-boot.run.jvmArguments=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+        "spring-boot:run"
+      ],
+      "options": { "cwd": "${workspaceFolder}\\E-Library\\backend" },
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run Frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": ["start"],
+      "options": { "cwd": "${workspaceFolder}\\E-Library\\frontend" },
+      "isBackground": true,
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    }
+  ],
+  "compounds": [
+    {
+      "label": "Run Frontend and Backend",
+      "tasks": [
+        { "task": "Run Backend (via run_backend.bat)" },
+        { "task": "Run Frontend" }
+      ]
+    }
+  ]
+}
