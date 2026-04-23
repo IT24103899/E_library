@@ -17,6 +17,42 @@
       "preLaunchTask": "Run Backend (via run_backend.bat)"
     },
     {
+      "name": "Run Backend on Port 8080",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.elibrary.ELibraryApplication",
+      "projectName": "elibrary-backend",
+      "cwd": "${workspaceFolder}\\E-Library\\backend",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run Spring Boot Backend",
+      "type": "java",
+      "request": "launch",
+      "mainClass": "com.elibrary.ELibraryApplication",
+      "projectName": "elibrary-backend",
+      "cwd": "${workspaceFolder}\\E-Library\\backend",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Run Backend Only",
+      "type": "sh",
+      "request": "launch",
+      "program": "cmd",
+      "args": ["/c", "\"${workspaceFolder}\\E-Library\\run_backend.bat\""],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Run Backend (via Batch)",
+      "type": "sh",
+      "request": "launch",
+      "program": "cmd",
+      "args": ["/c", "\"${workspaceFolder}\\E-Library\\run_backend.bat\""],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
       "name": "Open Frontend in Browser",
       "type": "pwa-chrome",
       "request": "launch",
@@ -29,6 +65,20 @@
       "name": "Run Frontend and Backend",
       "configurations": [
         "Attach to Backend (5005)",
+        "Open Frontend in Browser"
+      ]
+    },
+    {
+      "name": "Run All (Backend + Frontend)",
+      "configurations": [
+        "Run Backend on Port 8080",
+        "Open Frontend in Browser"
+      ]
+    },
+    {
+      "name": "Quickstart (Spring Boot + Frontend)",
+      "configurations": [
+        "Run Backend (via Batch)",
         "Open Frontend in Browser"
       ]
     }

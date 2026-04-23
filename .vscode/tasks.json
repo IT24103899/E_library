@@ -55,6 +55,17 @@
         "panel": "dedicated"
       },
       "problemMatcher": []
+    },
+    {
+      "type": "cmake",
+      "label": "CMake: build",
+      "command": "build",
+      "targets": [
+        "[N/A - Select Kit]"
+      ],
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "CMake template build task"
     }
   ],
   "compounds": [
