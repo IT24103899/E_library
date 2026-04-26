@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "E-Library",
+    "slug": "elibrary-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#1e3a5f"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1e3a5f"
+      },
+      "package": "com.anonymous.elibrarymobile"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "01e6e048-a5c0-4b12-9edf-40409a5af6ca"
+      }
+    }
+  }
+}
