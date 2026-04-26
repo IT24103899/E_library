@@ -7,8 +7,8 @@ import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons } from '@e
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
-// Keep the splash screen visible while we fetch resources
-SplashScreen.preventAutoHideAsync();
+// Note: We'll let the default splash screen handle auto-hiding for reliability
+// SplashScreen.preventAutoHideAsync();
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 
@@ -246,19 +246,19 @@ export default function App() {
     ...MaterialCommunityIcons.font,
   });
 
-  const onLayoutRootView = React.useCallback(async () => {
-    if (fontsLoaded) {
-      await SplashScreen.hideAsync();
+  // Automatically hide splash screen when ready
+  React.useEffect(() => {
+    async function hide() {
+      if (fontsLoaded) {
+        await SplashScreen.hideAsync();
+      }
     }
+    hide();
   }, [fontsLoaded]);
-
-  if (!fontsLoaded) {
-    return null;
-  }
 
   return (
     <AuthProvider>
-      <NavigationContainer onReady={onLayoutRootView}>
+      <NavigationContainer>
         <StatusBar barStyle="light-content" backgroundColor="#1e3a5f" />
         <RootNavigator />
       </NavigationContainer>
