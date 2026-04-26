@@ -115,43 +115,8 @@ export default function SearchScreen({ navigation }) {
         <Text style={styles.headerTitle}>🔍 Search Hub</Text>
       </View>
 
-      {/* Search bar */}
-      <View style={styles.searchBox}>
-        <View style={styles.searchRow}>
-          <Ionicons name="search-outline" size={18} color="#888" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search books, authors…"
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={() => handleSearch()}
-            returnKeyType="search"
-          />
-          {query.length > 0 && (
-            <TouchableOpacity onPress={() => { setQuery(''); setResults([]); setHasSearched(false); }}>
-              <Ionicons name="close-circle" size={18} color="#aaa" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity onPress={() => navigation.navigate('QRScanner')} style={{ marginLeft: 6 }}>
-            <Ionicons name="qr-code-outline" size={20} color="#1e3a5f" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setShowFilters((v) => !v)} style={{ marginLeft: 6 }}>
-            <Ionicons name="options-outline" size={20} color="#1e3a5f" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Advanced filters */}
-        {showFilters && (
-          <View style={styles.filtersPanel}>
-            <TextInput style={styles.filterInput} placeholder="Filter by author…" value={authorFilter} onChangeText={setAuthorFilter} />
-            <TextInput style={styles.filterInput} placeholder="Filter by genre…" value={genreFilter} onChangeText={setGenreFilter} />
-          </View>
-        )}
-
-      </View>
-
       {/* AI Idea Box */}
-      <View style={styles.aiBox}>
+      <View style={[styles.aiBox, { marginTop: 20 }]}>
         <View style={styles.aiHeader}>
           <Ionicons name="sparkles" size={16} color="#6366f1" />
           <Text style={styles.aiTitle}>AI Genius Suggestion</Text>
