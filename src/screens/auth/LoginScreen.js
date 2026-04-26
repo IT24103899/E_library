@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
-  ImageBackground
+  ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
@@ -27,7 +28,6 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await login(email.trim(), password);
-      // Navigation is handled automatically by RootNavigator in App.js based on user state
     } catch (err) {
       console.log('LOGIN ERROR:', err.message, err.response?.data);
       const msg = err.response?.data?.message || err.message || 'Login failed. Please try again.';
@@ -39,62 +39,63 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ImageBackground 
-        source={require('../../../assets/login_bg.png')} 
+      <LinearGradient
+        colors={['#1e3a5f', '#2a5298', '#1a2a6c']}
         style={styles.backgroundImage}
-        resizeMode="cover"
       >
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <View style={styles.header}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logo}>📚</Text>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Text style={styles.logo}>📚</Text>
+              </View>
+              <Text style={styles.title}>E-Library</Text>
+              <Text style={styles.subtitle}>Welcome back! Please login.</Text>
             </View>
-            <Text style={styles.title}>E-Library</Text>
-            <Text style={styles.subtitle}>Welcome back! Please login.</Text>
-          </View>
 
-          <View style={styles.form}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
-              placeholder="Enter your email"
-              placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+            <View style={styles.form}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={[styles.input, errors.email && styles.inputError]}
+                placeholder="Enter your email"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
-              placeholder="Enter your password"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+              <Text style={styles.label}>Password</Text>
+              <TextInput
+                style={[styles.input, errors.password && styles.inputError]}
+                placeholder="Enter your password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
-            <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
-            </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Login</Text>}
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.link}>
-              <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkBold}>Register</Text></Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </ImageBackground>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.link}>
+                <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkBold}>Register</Text></Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: { flex: 1, width: '100%', height: '100%' },
-  container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 80, paddingBottom: 40, backgroundColor: 'rgba(30, 58, 95, 0.4)' },
+  backgroundImage: { flex: 1 },
+  container: { flexGrow: 1, paddingHorizontal: 24, paddingTop: 40, paddingBottom: 40 },
   header: { alignItems: 'center', marginBottom: 40 },
   logoContainer: { backgroundColor: '#fff', padding: 15, borderRadius: 25, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 8 },
   logo: { fontSize: 50 },
