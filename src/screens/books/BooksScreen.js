@@ -139,11 +139,15 @@ export default function BooksScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.premiumHeader}>
-        <Text style={styles.headerTitle}>Gallery</Text>
-        <Text style={styles.headerSub}>Explore our curated collection</Text>
+      <LinearGradient 
+        colors={['#1e1b4b', '#4338ca']} 
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+        style={styles.premiumHeader}
+      >
+        <Text style={[styles.headerTitle, { color: '#fff' }]}>Gallery</Text>
+        <Text style={[styles.headerSub, { color: 'rgba(255,255,255,0.8)' }]}>Explore our curated collection</Text>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#6366f1" />
+          <Ionicons name="search" size={20} color="#4338ca" />
           <TextInput
             style={styles.searchInput}
             placeholder="Search books..."
@@ -152,7 +156,7 @@ export default function BooksScreen({ navigation }) {
             onChangeText={setSearch}
           />
         </View>
-      </View>
+      </LinearGradient>
 
       <View style={styles.genreWrapper}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.genreScroll}>
@@ -215,6 +219,7 @@ const styles = StyleSheet.create({
   bookAuthorGrid: { color: '#64748b', fontSize: 11, fontWeight: '500', marginBottom: 12 },
   actionButtonRow: { flexDirection: 'row', gap: 6 },
   miniActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderRadius: 10 },
+  readBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderRadius: 10, backgroundColor: '#059669' },
   miniActionText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyState: { alignItems: 'center', marginTop: 100 },

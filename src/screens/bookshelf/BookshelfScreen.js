@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getBookshelf } from '../../services/api';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const SHELVES = [
   { id: 'reading', label: 'Reading Now', color: '#12c2e9', icon: 'book' },
@@ -34,10 +35,14 @@ export default function BookshelfScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-        <View style={[styles.header, { backgroundColor: activeColor }]}>
+        <LinearGradient 
+            colors={[activeColor, activeColor + 'DD', activeColor + 'BB']} 
+            start={{x: 0, y: 0}} end={{x: 1, y: 1}}
+            style={styles.header}
+        >
             <Text style={styles.headerTitle}>My Library 📖</Text>
             <Text style={styles.headerSub}>Enjoy your personalized collection.</Text>
-        </View>
+        </LinearGradient>
 
         <View style={styles.tabContainer}>
             {SHELVES.map(shelf => (
