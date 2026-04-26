@@ -7,6 +7,7 @@ import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { saveReadingProgress, getReadingProgress, logReadingVelocity, getReadingVelocityStats, getBookmarks, addBookmark, deleteBookmark } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 
 const { width } = Dimensions.get('window');
 
@@ -188,7 +189,7 @@ export default function ReaderScreen({ route, navigation }) {
   const progressPct = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
   const isBookmarked = bookmarks.some(b => b.pageNumber === currentPage);
 
-  const proxyUrl = bookId ? `http://10.0.2.2:4000/api/books/${bookId}/pdf-proxy` : pdfUrl;
+  const proxyUrl = bookId ? `${API_BASE_URL}books/${bookId}/pdf-proxy` : pdfUrl;
 
   const singlePageHtml = `
 <!DOCTYPE html>
