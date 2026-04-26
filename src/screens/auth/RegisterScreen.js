@@ -47,7 +47,7 @@ export default function RegisterScreen({ navigation }) {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ImageBackground 
-        source={require('../../../assets/login-bg.png')} 
+        source={require('../../../assets/login_bg.png')} 
         style={styles.backgroundImage}
         resizeMode="cover"
       >
