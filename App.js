@@ -292,13 +292,22 @@ function RootNavigator() {
     ...MaterialCommunityIcons.font,
   });
   
-  const loading = authLoading || !fontsLoaded;
+  const [timedOut, setTimedOut] = React.useState(false);
+  const loading = (authLoading || !fontsLoaded) && !timedOut;
 
-  // Hide splash screen as soon as we mount if it hasn't been hidden yet
+  // Safety timeout: Ensure splash screen hides even if fonts/auth take too long
   React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+      SplashScreen.hideAsync().catch(() => {});
+    }, 5000); // 5 second hard limit
+
     if (!loading) {
+      clearTimeout(timer);
       SplashScreen.hideAsync().catch(() => {});
     }
+    
+    return () => clearTimeout(timer);
   }, [loading]);
 
   // If we are still checking local storage for a token or loading fonts, 

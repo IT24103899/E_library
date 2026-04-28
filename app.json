@@ -20,14 +20,17 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1e3a5f"
       },
-      "package": "com.anonymous.elibrarymobile"
+      "package": "com.anonymous.elibrarymobile",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "extra": {
       "eas": {
-        "projectId": "3601d22c-4c65-4221-8947-0763e5009b15"
+        "projectId": "3d912aae-f990-4419-bcb9-0516920fec3f"
       }
     },
-    "owner": "mahelapramu",
     "plugins": [
       [
         "expo-camera",
@@ -43,6 +46,7 @@
       ],
       "expo-document-picker",
       "expo-font"
-    ]
+    ],
+    "owner": "bharanamihijaya"
   }
 }
