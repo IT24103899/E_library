@@ -3,6 +3,7 @@
     "name": "E-Library",
     "slug": "elibrary-mobile",
     "version": "1.0.0",
+    "newArchEnabled": false,
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
@@ -23,8 +24,25 @@
     },
     "extra": {
       "eas": {
-        "projectId": "01e6e048-a5c0-4b12-9edf-40409a5af6ca"
+        "projectId": "3601d22c-4c65-4221-8947-0763e5009b15"
       }
-    }
+    },
+    "owner": "mahelapramu",
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow E-Library to access your camera"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you choose profile pictures and book covers."
+        }
+      ],
+      "expo-document-picker",
+      "expo-font"
+    ]
   }
 }

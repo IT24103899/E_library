@@ -6,6 +6,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { getBookshelf } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const SHELVES = [
   { id: 'reading', label: 'Reading Now', color: '#12c2e9', icon: 'book' },
@@ -14,7 +16,9 @@ const SHELVES = [
 ];
 
 export default function BookshelfScreen({ navigation }) {
+  const { colors, dark } = useTheme();
   const [bookshelf, setBookshelf] = useState({});
+
   const [activeTab, setActiveTab] = useState('reading');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -34,28 +38,36 @@ export default function BookshelfScreen({ navigation }) {
   const activeColor = SHELVES.find(s => s.id === activeTab)?.color || '#333';
 
   return (
-    <View style={styles.container}>
-        <LinearGradient 
-            colors={[activeColor, activeColor + 'DD', activeColor + 'BB']} 
-            start={{x: 0, y: 0}} end={{x: 1, y: 1}}
-            style={styles.header}
-        >
-            <Text style={styles.headerTitle}>My Library 📖</Text>
-            <Text style={styles.headerSub}>Enjoy your personalized collection.</Text>
-        </LinearGradient>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient 
+        colors={dark ? ['#0f172a', '#1e1b4b'] : [activeColor, activeColor + 'DD']} 
+        start={{x: 0, y: 0}} end={{x: 1, y: 1}}
+        style={styles.header}
+      >
+        <View style={styles.headerDecoration} />
+        <Text style={styles.headerTitle}>My Library</Text>
+        <Text style={styles.headerSub}>Managing your personal reading collection</Text>
+      </LinearGradient>
 
-        <View style={styles.tabContainer}>
-            {SHELVES.map(shelf => (
-                <TouchableOpacity
-                    key={shelf.id}
-                    style={[styles.tab, activeTab === shelf.id && { backgroundColor: shelf.color, borderColor: shelf.color }]}
-                    onPress={() => setActiveTab(shelf.id)}
-                >
-                    <Ionicons name={shelf.icon} size={18} color={activeTab === shelf.id ? '#fff' : shelf.color} />
-                    <Text style={[styles.tabText, activeTab === shelf.id && { color: '#fff' }]}>{shelf.label}</Text>
-                </TouchableOpacity>
-            ))}
-        </View>
+      <View style={styles.tabContainer}>
+        {SHELVES.map(shelf => (
+          <TouchableOpacity
+            key={shelf.id}
+            style={[
+              styles.tab, 
+              { backgroundColor: colors.surface, borderColor: colors.border }, 
+              activeTab === shelf.id && { backgroundColor: shelf.color, borderColor: shelf.color, elevation: 8 }
+            ]}
+            onPress={() => setActiveTab(shelf.id)}
+          >
+            <Ionicons name={shelf.icon} size={18} color={activeTab === shelf.id ? '#fff' : shelf.color} />
+            <Text style={[styles.tabText, { color: colors.textSecondary }, activeTab === shelf.id && { color: '#fff' }]}>
+              {shelf.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
 
         {loading ? (
             <View style={styles.center}><ActivityIndicator size="large" color={activeColor} /></View>
@@ -66,25 +78,31 @@ export default function BookshelfScreen({ navigation }) {
                 contentContainerStyle={styles.list}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />}
                 renderItem={({item}) => (
-                    <TouchableOpacity style={styles.card} activeOpacity={0.9} onPress={() => navigation.navigate('BookDetail', { bookId: item.bookId?._id || item.bookId, book: item.bookId || {} })}>
+                    <TouchableOpacity 
+                        style={[styles.card, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]} 
+                        activeOpacity={0.9} 
+                        onPress={() => navigation.navigate('Books', { screen: 'BookDetail', params: { bookId: item.bookId?._id || item.bookId, book: item.bookId || {} } })}
+                    >
                         {item.bookId?.coverUrl ? (
                             <Image source={{ uri: item.bookId.coverUrl }} style={styles.cover} />
                         ) : (
-                            <View style={styles.coverPlaceholder}><Ionicons name="book" size={24} color="#fff" /></View>
+                            <View style={[styles.coverPlaceholder, { backgroundColor: colors.border }]}><Ionicons name="book" size={24} color={colors.textSecondary} /></View>
                         )}
                         <View style={styles.info}>
-                            <Text style={styles.title} numberOfLines={2}>{item.bookId?.title || 'Unknown Book'}</Text>
-                            <Text style={styles.author}>{item.bookId?.author || 'Unknown'}</Text>
+                            <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.bookId?.title || 'Unknown Book'}</Text>
+                            <Text style={[styles.author, { color: colors.textSecondary }]}>{item.bookId?.author || 'Unknown'}</Text>
                             <View style={[styles.statusTag, { backgroundColor: activeColor + '20' }]}>
                                 <Text style={[styles.statusText, { color: activeColor }]}>{item.status}</Text>
                             </View>
                         </View>
                     </TouchableOpacity>
                 )}
+
                 ListEmptyComponent={
                     <View style={styles.empty}>
-                        <Ionicons name="folder-open" size={70} color="#ddd" />
-                        <Text style={styles.emptyTitle}>This shelf is totally empty!</Text>
+                        <Ionicons name="folder-open" size={70} color={colors.border} />
+                        <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>This shelf is totally empty!</Text>
+
                         <TouchableOpacity style={[styles.exploreBtn, { backgroundColor: activeColor }]} onPress={() => navigation.navigate('Books')}>
                             <Text style={styles.exploreText}>Find Great Books</Text>
                         </TouchableOpacity>
@@ -97,25 +115,37 @@ export default function BookshelfScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  header: { paddingTop: 60, paddingBottom: 50, paddingHorizontal: 25, borderBottomRightRadius: 40, borderBottomLeftRadius: 40 },
-  headerTitle: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 15, color: '#fff', opacity: 0.8, marginTop: 5, fontWeight: '600' },
-  tabContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: -25, gap: 10, paddingHorizontal: 15 },
-  tab: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 25, borderWidth: 2, borderColor: '#eee', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-  tabText: { marginLeft: 6, fontSize: 13, fontWeight: '800', color: '#555' },
-  list: { padding: 20, paddingBottom: 50, paddingTop: 30 },
-  card: { flexDirection: 'row', backgroundColor: '#fff', padding: 15, borderRadius: 25, marginBottom: 15, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 5 },
-  cover: { width: 75, height: 110, borderRadius: 15 },
-  coverPlaceholder: { width: 75, height: 110, borderRadius: 15, backgroundColor: '#bbb', justifyContent: 'center', alignItems: 'center' },
-  info: { flex: 1, marginLeft: 15, justifyContent: 'center' },
-  title: { fontSize: 18, fontWeight: '800', color: '#222', marginBottom: 5 },
-  author: { fontSize: 14, color: '#888', fontWeight: '600', marginBottom: 10 },
-  statusTag: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start' },
-  statusText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  container: { flex: 1 },
+  header: { 
+    paddingTop: 75, 
+    paddingBottom: 60, 
+    paddingHorizontal: 30, 
+    borderBottomRightRadius: 45, 
+    borderBottomLeftRadius: 45,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  headerDecoration: { position: 'absolute', top: -30, right: -30, width: 140, height: 140, borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.08)' },
+  headerTitle: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1 },
+  headerSub: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 6, fontWeight: '600' },
+  
+  tabContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: -32, gap: 10, paddingHorizontal: 15 },
+  tab: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderRadius: 20, borderWidth: 2, shadowOpacity: 0.15, shadowRadius: 10, elevation: 6 },
+  tabText: { marginLeft: 8, fontSize: 14, fontWeight: '900' },
+  
+  list: { padding: 25, paddingBottom: 130, paddingTop: 30 },
+  card: { flexDirection: 'row', padding: 20, borderRadius: 32, marginBottom: 18, shadowOpacity: 0.1, shadowRadius: 20, elevation: 8 },
+  cover: { width: 85, height: 125, borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 },
+  coverPlaceholder: { width: 85, height: 125, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  info: { flex: 1, marginLeft: 20, justifyContent: 'center' },
+  title: { fontSize: 19, fontWeight: '900', marginBottom: 6, letterSpacing: -0.5 },
+  author: { fontSize: 14, fontWeight: '700', marginBottom: 12, opacity: 0.7 },
+  statusTag: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start' },
+  statusText: { fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { alignItems: 'center', marginTop: 50 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#777', marginTop: 20 },
-  exploreBtn: { paddingHorizontal: 25, paddingVertical: 12, borderRadius: 20, marginTop: 20, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 5 },
-  exploreText: { color: '#fff', fontWeight: '800', fontSize: 15 }
+  empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 22, fontWeight: '900', marginTop: 25, textAlign: 'center' },
+  exploreBtn: { paddingHorizontal: 35, paddingVertical: 18, borderRadius: 24, marginTop: 30, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 },
+  exploreText: { color: '#fff', fontWeight: '900', fontSize: 17, letterSpacing: 0.5 }
 });

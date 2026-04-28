@@ -6,6 +6,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getBooks, addToBookshelf, getBookshelf } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const GENRES = [
   { name: 'All', color: '#FF416C' },
@@ -18,7 +20,9 @@ const GENRES = [
 ];
 
 export default function BooksScreen({ navigation }) {
+  const { colors, dark } = useTheme();
   const [books, setBooks] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
@@ -72,10 +76,11 @@ export default function BooksScreen({ navigation }) {
 
   const renderBook = ({ item, index }) => (
     <TouchableOpacity
-      style={styles.bookCardGrid}
+      style={[styles.bookCardGrid, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#1e293b' }]}
       onPress={() => navigation.navigate('BookDetail', { bookId: item._id, book: item })}
       activeOpacity={0.9}
     >
+
       <View style={styles.cardContainer}>
         {/* Cover Image */}
         <View style={styles.imageWrapper}>
@@ -86,17 +91,19 @@ export default function BooksScreen({ navigation }) {
               resizeMode="cover"
             />
           ) : (
-            <LinearGradient colors={['#6366f1', '#a855f7']} style={styles.coverImgGrid}>
+            <LinearGradient colors={dark ? ['#312e81', '#4338ca'] : ['#6366f1', '#a855f7']} style={styles.coverImgGrid}>
               <Ionicons name="book" size={40} color="#fff" />
             </LinearGradient>
           )}
+
           
           {/* Floating Genre Tag */}
           {item.category && (
-            <View style={styles.floatingTag}>
-              <Text style={styles.floatingTagText}>{item.category}</Text>
+            <View style={[styles.floatingTag, { backgroundColor: dark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.9)' }]}>
+              <Text style={[styles.floatingTagText, { color: dark ? '#818cf8' : '#4f46e5' }]}>{item.category}</Text>
             </View>
           )}
+
 
           {/* Action Overlay */}
           <LinearGradient 
@@ -107,8 +114,9 @@ export default function BooksScreen({ navigation }) {
 
         {/* Content Section */}
         <View style={styles.cardInfoSection}>
-          <Text style={styles.bookTitleGrid} numberOfLines={2}>{item.title}</Text>
-          <Text style={styles.bookAuthorGrid} numberOfLines={1}>{item.author}</Text>
+          <Text style={[styles.bookTitleGrid, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+          <Text style={[styles.bookAuthorGrid, { color: colors.textSecondary }]} numberOfLines={1}>{item.author}</Text>
+
           
           <View style={styles.actionButtonRow}>
             <TouchableOpacity
@@ -125,12 +133,13 @@ export default function BooksScreen({ navigation }) {
             </TouchableOpacity>
             
             <TouchableOpacity 
-               style={[styles.miniActionBtn, { backgroundColor: '#4f46e5' }]} 
+               style={[styles.miniActionBtn, { backgroundColor: colors.primary }]} 
                onPress={() => handleBorrow(item._id, item.title)}
             >
                <Ionicons name="add-circle-outline" size={14} color="#fff" />
                <Text style={styles.miniActionText}>Borrow</Text>
             </TouchableOpacity>
+
           </View>
         </View>
       </View>
@@ -138,43 +147,56 @@ export default function BooksScreen({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+
       <LinearGradient 
-        colors={['#1e1b4b', '#4338ca']} 
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+        colors={['#0f172a', '#1e1b4b', '#312e81']} 
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={styles.premiumHeader}
       >
-        <Text style={[styles.headerTitle, { color: '#fff' }]}>Gallery</Text>
-        <Text style={[styles.headerSub, { color: 'rgba(255,255,255,0.8)' }]}>Explore our curated collection</Text>
-        <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#4338ca" />
+        <View style={styles.headerDecoration} />
+        
+        <Text style={styles.headerTitle}>Discover</Text>
+        <Text style={styles.headerSub}>Find your next great adventure</Text>
+        
+        <View style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.12)' }]}>
+          <Ionicons name="search" size={20} color="rgba(255,255,255,0.6)" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search books..."
-            placeholderTextColor="#94a3b8"
+            placeholder="Search titles, authors..."
+            placeholderTextColor="rgba(255,255,255,0.5)"
             value={search}
             onChangeText={setSearch}
           />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
+            </TouchableOpacity>
+          )}
         </View>
       </LinearGradient>
 
-      <View style={styles.genreWrapper}>
+
+      <View style={[styles.genreWrapper, { backgroundColor: colors.background }]}>
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.genreScroll}>
           {GENRES.map(g => (
             <TouchableOpacity
               key={g.name}
-              style={[styles.genreChip, genre === g.name && { backgroundColor: '#6366f1', borderColor: '#6366f1' }]}
+              style={[styles.genreChip, { backgroundColor: colors.surface, borderColor: colors.border }, genre === g.name && { backgroundColor: colors.primary, borderColor: colors.primary }]}
               onPress={() => setGenre(g.name)}
             >
-              <Text style={[styles.genreChipText, genre === g.name && { color: '#fff' }]}>{g.name}</Text>
+              <Text style={[styles.genreChipText, { color: colors.textSecondary }, genre === g.name && { color: '#fff' }]}>{g.name}</Text>
             </TouchableOpacity>
           ))}
+
         </ScrollView>
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator size="large" color="#6366f1" /></View>
+        <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
       ) : (
+
         <FlatList
           data={filtered}
           keyExtractor={(b) => String(b._id)}
@@ -184,10 +206,11 @@ export default function BooksScreen({ navigation }) {
           contentContainerStyle={styles.gridContent}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="planet" size={80} color="#e2e8f0" />
-              <Text style={styles.emptyTitle}>No books found</Text>
-              <Text style={styles.emptySub}>Try adjusting your search or genre.</Text>
+              <Ionicons name="planet" size={80} color={colors.border} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No books found</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary, opacity: 0.7 }]}>Try adjusting your search or genre.</Text>
             </View>
+
           }
         />
       )}
@@ -196,33 +219,47 @@ export default function BooksScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  premiumHeader: { paddingTop: 60, paddingHorizontal: 25, paddingBottom: 20, backgroundColor: '#fff' },
-  headerTitle: { fontSize: 32, fontWeight: '900', color: '#1e293b' },
-  headerSub: { fontSize: 16, color: '#64748b', marginTop: 4 },
-  searchBar: { flexDirection: 'row', backgroundColor: '#f1f5f9', marginTop: 20, padding: 12, borderRadius: 16, alignItems: 'center' },
-  searchInput: { flex: 1, marginLeft: 10, fontSize: 15, color: '#1e293b', fontWeight: '500' },
-  genreWrapper: { paddingVertical: 15, backgroundColor: '#fff' },
+  container: { flex: 1 },
+  premiumHeader: { 
+    paddingTop: 75, 
+    paddingHorizontal: 25, 
+    paddingBottom: 35,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    position: 'relative',
+    overflow: 'hidden',
+    elevation: 10,
+  },
+  headerDecoration: { position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: 'rgba(255,255,255,0.06)' },
+  headerTitle: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1 },
+  headerSub: { fontSize: 16, color: 'rgba(255,255,255,0.85)', marginTop: 6, fontWeight: '600' },
+  searchBar: { flexDirection: 'row', marginTop: 25, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 20, alignItems: 'center' },
+  searchInput: { flex: 1, marginLeft: 12, fontSize: 16, color: '#fff', fontWeight: '600' },
+  
+  genreWrapper: { paddingVertical: 20 },
   genreScroll: { paddingHorizontal: 25 },
-  genreChip: { backgroundColor: '#f1f5f9', paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, marginRight: 10, borderWidth: 1, borderColor: '#e2e8f0' },
-  genreChipText: { fontSize: 13, fontWeight: '700', color: '#64748b' },
-  gridContent: { paddingHorizontal: 12, paddingBottom: 120 },
-  bookCardGrid: { flex: 1, margin: 8, borderRadius: 20, backgroundColor: '#fff', elevation: 8, shadowColor: '#1e293b', shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { height: 4, width: 0 } },
-  cardContainer: { borderRadius: 20, overflow: 'hidden' },
-  imageWrapper: { height: 200, width: '100%', position: 'relative' },
+  genreChip: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 16, marginRight: 12, borderWidth: 1.5 },
+  genreChipText: { fontSize: 14, fontWeight: '800' },
+  
+  gridContent: { paddingHorizontal: 15, paddingBottom: 130 },
+  bookCardGrid: { flex: 1, margin: 8, borderRadius: 32, elevation: 12, shadowOpacity: 0.18, shadowRadius: 20, shadowOffset: { height: 10, width: 0 } },
+  cardContainer: { borderRadius: 32, overflow: 'hidden' },
+  imageWrapper: { height: 220, width: '100%', position: 'relative' },
   coverImgGrid: { width: '100%', height: '100%' },
   cardOverlay: { ...StyleSheet.absoluteFillObject },
-  floatingTag: { position: 'absolute', top: 10, left: 10, backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, zIndex: 5 },
-  floatingTagText: { fontSize: 9, fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase' },
-  cardInfoSection: { padding: 12 },
-  bookTitleGrid: { color: '#1e293b', fontSize: 14, fontWeight: '800', marginBottom: 2 },
-  bookAuthorGrid: { color: '#64748b', fontSize: 11, fontWeight: '500', marginBottom: 12 },
-  actionButtonRow: { flexDirection: 'row', gap: 6 },
-  miniActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderRadius: 10 },
-  readBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, borderRadius: 10, backgroundColor: '#059669' },
-  miniActionText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  floatingTag: { position: 'absolute', top: 12, left: 12, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, zIndex: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5, elevation: 5 },
+  floatingTagText: { fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+  
+  cardInfoSection: { padding: 16 },
+  bookTitleGrid: { fontSize: 16, fontWeight: '900', marginBottom: 4, letterSpacing: -0.4 },
+  bookAuthorGrid: { fontSize: 13, fontWeight: '600', marginBottom: 15, opacity: 0.7 },
+  actionButtonRow: { flexDirection: 'row', gap: 8 },
+  miniActionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 14, elevation: 4 },
+  readBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 14, backgroundColor: '#059669', elevation: 4 },
+  miniActionText: { color: '#fff', fontSize: 12, fontWeight: '900' },
+  
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyState: { alignItems: 'center', marginTop: 100 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#475569', marginTop: 20 },
-  emptySub: { fontSize: 14, color: '#94a3b8', marginTop: 8, textAlign: 'center', paddingHorizontal: 40 }
+  emptyState: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 22, fontWeight: '900', marginTop: 25, textAlign: 'center' },
+  emptySub: { fontSize: 16, marginTop: 10, textAlign: 'center', opacity: 0.6, lineHeight: 24 }
 });

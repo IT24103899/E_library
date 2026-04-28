@@ -7,12 +7,16 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getActivity, getReadingStats } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const { width } = Dimensions.get('window');
 const COLORS = ['#FF6B6B', '#4ECDC4', '#FF9F1C', '#1A535C', '#6C5CE7', '#A8E6CF'];
 
 export default function ActivityScreen() {
+  const { colors, dark } = useTheme();
   const [history, setHistory] = useState([]);
+
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -50,16 +54,19 @@ export default function ActivityScreen() {
     }
   };
 
-  if (loading) return <View style={styles.center}><ActivityIndicator size="large" color="#FF6B6B" /></View>;
+  if (loading) return <View style={[styles.center, { backgroundColor: colors.background }]}><ActivityIndicator size="large" color={colors.primary} /></View>;
+
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+
       <LinearGradient
-        colors={['#FF6B6B', '#FF8E8E']}
+        colors={dark ? ['#7f1d1d', '#450a0a'] : ['#FF6B6B', '#FF8E8E']}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
+
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>Your Journey 🚀</Text>
@@ -74,50 +81,57 @@ export default function ActivityScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor="#FF6B6B" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
       >
-        <View style={styles.statsRow}>
+
+        <View style={[styles.statsRow, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : colors.primary }]}>
           {[
-            { label: 'Books', value: stats?.booksRead || 0, icon: 'library-outline', color: '#4ECDC4' },
-            { label: 'Pages', value: stats?.pagesRead || 0, icon: 'document-text-outline', color: '#6C5CE7' },
-            { label: 'Streak', value: stats?.streak || 0, icon: 'flame-outline', color: '#FF6B6B' },
-            { label: 'Velocity', value: stats?.velocity || 0, icon: 'speedometer-outline', color: '#FF9F1C' },
+            { label: 'Books', value: stats?.booksRead || 0, icon: 'library-outline', color: dark ? '#34d399' : '#4ECDC4' },
+            { label: 'Pages', value: stats?.pagesRead || 0, icon: 'document-text-outline', color: dark ? '#818cf8' : '#6C5CE7' },
+            { label: 'Streak', value: stats?.streak || 0, icon: 'flame-outline', color: dark ? '#f87171' : '#FF6B6B' },
+            { label: 'Velocity', value: stats?.velocity || 0, icon: 'speedometer-outline', color: dark ? '#fbbf24' : '#FF9F1C' },
           ].map((s, i) => (
             <View key={i} style={styles.statBubble}>
-              <View style={[styles.iconBox, { backgroundColor: s.color + '15' }]}>
+              <View style={[styles.iconBox, { backgroundColor: s.color + '25' }]}>
                 <Ionicons name={s.icon} size={22} color={s.color} />
               </View>
-              <Text style={styles.statVal}>{s.value}</Text>
-              <Text style={styles.statLab}>{s.label}</Text>
+
+              <Text style={[styles.statVal, { color: colors.text }]}>{s.value}</Text>
+              <Text style={[styles.statLab, { color: colors.textSecondary }]}>{s.label}</Text>
             </View>
           ))}
         </View>
 
+
         <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <View style={[styles.searchContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} style={styles.searchIcon} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               placeholder="Search history..."
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textSecondary}
               value={filter}
               onChangeText={setFilter}
             />
           </View>
         </View>
 
+
         <View style={styles.timelineSection}>
-          <Text style={styles.sectionHeading}>Reading Timeline</Text>
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>Reading Timeline</Text>
+
           
           {filteredHistory.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name="journal-outline" size={60} color="#eee" />
-              <Text style={styles.emptyMain}>No progress found</Text>
-              <Text style={styles.emptySub}>Start reading to track your journey here!</Text>
+              <Ionicons name="journal-outline" size={60} color={colors.border} />
+              <Text style={[styles.emptyMain, { color: colors.textSecondary }]}>No progress found</Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary, opacity: 0.7 }]}>Start reading to track your journey here!</Text>
             </View>
+
           ) : (
             <View style={styles.timelineList}>
-              <View style={styles.timelineTrack} />
+              <View style={[styles.timelineTrack, { backgroundColor: colors.border }]} />
+
               {filteredHistory.map((item, idx) => {
                 if (!item) return null;
                 const totalPages = parseInt(item.totalPages) || 0;
@@ -127,34 +141,37 @@ export default function ActivityScreen() {
 
                 return (
                   <View key={idx} style={styles.timelineItem}>
-                    <View style={[styles.dot, { backgroundColor: dotColor, borderColor: '#fff' }]} />
-                    <View style={styles.card}>
+                    <View style={[styles.dot, { backgroundColor: dotColor, borderColor: colors.surface }]} />
+                    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                       <View style={styles.cardHeader}>
-                        <Text style={styles.dateText}>{formatDate(item.lastReadAt)}</Text>
+                        <Text style={[styles.dateText, { color: colors.textSecondary }]}>{formatDate(item.lastReadAt)}</Text>
                         {idx === 0 && !filter && (
-                          <View style={styles.currentBadge}>
-                            <Text style={styles.currentText}>Current</Text>
+                          <View style={[styles.currentBadge, { backgroundColor: dark ? 'rgba(248, 113, 113, 0.2)' : '#FF6B6B15' }]}>
+                            <Text style={[styles.currentText, { color: dark ? '#f87171' : '#FF6B6B' }]}>Current</Text>
                           </View>
                         )}
                       </View>
-                      <Text style={styles.bookTitle} numberOfLines={1}>{item.title || item.bookTitle || 'Untitled Book'}</Text>
-                      <Text style={styles.authorText} numberOfLines={1}>{item.author || 'Unknown Author'}</Text>
+                      <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={1}>{item.title || item.bookTitle || 'Untitled Book'}</Text>
+                      <Text style={[styles.authorText, { color: colors.textSecondary }]} numberOfLines={1}>{item.author || 'Unknown Author'}</Text>
+
                       
                       <View style={styles.progressRow}>
-                        <Text style={styles.progressDetail}>
+                        <Text style={[styles.progressDetail, { color: colors.textSecondary }]}>
                           Reached page {pageNumber}
-                          {progress > 0 && <Text style={styles.percentageText}> • {progress}%</Text>}
+                          {progress > 0 && <Text style={[styles.percentageText, { color: colors.text }]}> • {progress}%</Text>}
                         </Text>
                       </View>
 
+
                       {progress > 0 && (
                         <View style={styles.barContainer}>
-                          <View style={styles.barBg}>
+                          <View style={[styles.barBg, { backgroundColor: dark ? colors.background : '#F1F5F9' }]}>
                              <View style={[styles.barFill, { flex: progress / 100, backgroundColor: dotColor }]} />
                              <View style={[styles.barFill, { flex: (100 - progress) / 100, backgroundColor: 'transparent' }]} />
                           </View>
                         </View>
                       )}
+
                     </View>
                   </View>
                 );
@@ -168,8 +185,9 @@ export default function ActivityScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
   header: { 
     paddingTop: 65, paddingBottom: 50, paddingHorizontal: 25,
     borderBottomLeftRadius: 40, borderBottomRightRadius: 40,
@@ -183,9 +201,10 @@ const styles = StyleSheet.create({
   statsRow: { 
     flexDirection: 'row', justifyContent: 'space-between', 
     marginTop: -35, marginHorizontal: 20,
-    backgroundColor: '#fff', borderRadius: 25, padding: 20,
-    elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 20
+    borderRadius: 25, padding: 20,
+    elevation: 10, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 20
   },
+
   statBubble: { alignItems: 'center', flex: 1 },
   iconBox: { width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   statVal: { fontSize: 18, fontWeight: '800', color: '#1A535C' },
@@ -193,9 +212,10 @@ const styles = StyleSheet.create({
   searchSection: { marginTop: 25, paddingHorizontal: 25 },
   searchContainer: { 
     flexDirection: 'row', alignItems: 'center', 
-    backgroundColor: '#fff', borderRadius: 15, paddingHorizontal: 15, height: 50,
-    borderWidth: 1, borderColor: '#F1F5F9'
+    borderRadius: 15, paddingHorizontal: 15, height: 50,
+    borderWidth: 1
   },
+
   searchIcon: { marginRight: 10 },
   searchInput: { flex: 1, color: '#1E293B', fontSize: 15, fontWeight: '600' },
   timelineSection: { marginTop: 25, paddingHorizontal: 25 },
@@ -212,11 +232,12 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2
   },
   card: { 
-    flex: 1, marginLeft: 20, backgroundColor: '#fff', 
+    flex: 1, marginLeft: 20, 
     borderRadius: 20, padding: 18,
-    borderWidth: 1, borderColor: '#F1F5F9',
-    elevation: 3, shadowColor: '#334155', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8
+    borderWidth: 1,
+    elevation: 3, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8
   },
+
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   dateText: { fontSize: 12, fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' },
   currentBadge: { backgroundColor: '#FF6B6B15', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },

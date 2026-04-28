@@ -44,22 +44,28 @@ export default function AdminDashboardScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1e3a5f', '#12263f']}
+        colors={['#0f172a', '#1e293b', '#334155']}
         style={styles.headerGradient}
+        start={{x: 0, y: 0}} end={{x: 1, y: 1}}
       >
+        <View style={styles.headerAccent1} />
+        <View style={styles.headerAccent2} />
+        
         <View style={styles.header}>
           <View>
-            <Text style={styles.headerTitle}>Admin Hub</Text>
-            <Text style={styles.headerSub}>Real-time system monitoring</Text>
+            <Text style={styles.headerTitle}>System Hub</Text>
+            <Text style={styles.headerSub}>Control Center • v1.0.4</Text>
           </View>
           <TouchableOpacity style={styles.profileBtn} onPress={() => navigation.navigate('Profile')}>
-            <Ionicons name="person-circle" size={40} color="#fff" />
+            <LinearGradient colors={['#4f46e5', '#a855f7']} style={styles.profileIconGradient}>
+              <Ionicons name="shield-checkmark" size={24} color="#fff" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
         <View style={styles.statusBanner}>
           <View style={styles.statusDot} />
-          <Text style={styles.statusText}>All systems operational</Text>
+          <Text style={styles.statusText}>ALL SYSTEMS OPERATIONAL</Text>
         </View>
       </LinearGradient>
 
@@ -121,31 +127,72 @@ export default function AdminDashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f1f5f9' },
+  container: { flex: 1, backgroundColor: '#f8fafc' },
   scroll: { flex: 1 },
-  content: { paddingBottom: 40 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f1f5f9' },
-  loadingText: { marginTop: 12, color: '#64748b', fontSize: 15, fontWeight: '500' },
-  headerGradient: { paddingTop: 60, paddingBottom: 30, paddingHorizontal: 24, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 14, color: '#94a3b8', marginTop: 2, fontWeight: '500' },
-  profileBtn: { shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 },
-  statusBanner: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(16, 185, 129, 0.15)', alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, marginTop: 16 },
-  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981', marginRight: 8 },
-  statusText: { color: '#10b981', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#1e293b', paddingHorizontal: 24, marginTop: 24, marginBottom: 16 },
+  content: { paddingBottom: 110 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
+  loadingText: { marginTop: 15, color: '#64748b', fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
+  
+  headerGradient: { 
+    paddingTop: 70, 
+    paddingBottom: 40, 
+    paddingHorizontal: 25, 
+    borderBottomLeftRadius: 40, 
+    borderBottomRightRadius: 40,
+    position: 'relative',
+    overflow: 'hidden',
+    elevation: 15,
+  },
+  headerAccent1: { position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(79, 70, 229, 0.1)' },
+  headerAccent2: { position: 'absolute', bottom: -30, left: -30, width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(168, 85, 247, 0.08)' },
+  
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 1 },
+  headerTitle: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: -1 },
+  headerSub: { fontSize: 14, color: '#94a3b8', marginTop: 4, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+  
+  profileBtn: { 
+    width: 50, height: 50, borderRadius: 15, overflow: 'hidden',
+    shadowColor: '#4f46e5', shadowOpacity: 0.3, shadowRadius: 10, elevation: 8 
+  },
+  profileIconGradient: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  
+  statusBanner: { 
+    flexDirection: 'row', alignItems: 'center', 
+    backgroundColor: 'rgba(16, 185, 129, 0.15)', 
+    alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 8, 
+    borderRadius: 12, marginTop: 25, zIndex: 1,
+    borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.2)'
+  },
+  statusDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981', marginRight: 10 },
+  statusText: { color: '#10b981', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  
+  sectionTitle: { fontSize: 22, fontWeight: '900', color: '#0f172a', paddingHorizontal: 25, marginTop: 35, marginBottom: 20, letterSpacing: -0.5 },
+  
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, gap: 12 },
-  statCard: { width: (width - 52) / 2, backgroundColor: '#fff', borderRadius: 20, padding: 16, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 3 },
-  statIconContainer: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  statInfo: { flex: 1 },
-  statValue: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
-  statLabel: { fontSize: 12, color: '#64748b', fontWeight: '600', marginBottom: 2 },
-  actionsGrid: { paddingHorizontal: 20, gap: 12 },
-  actionCard: { borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 3 },
-  actionCardGradient: { flexDirection: 'row', alignItems: 'center', padding: 16 },
-  actionIcon: { width: 56, height: 56, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  actionLabel: { fontSize: 17, fontWeight: '800', color: '#1e293b' },
-  actionDesc: { fontSize: 13, color: '#64748b', marginTop: 2, fontWeight: '500' },
-  chevron: { marginLeft: 'auto' },
+  statCard: { 
+    width: (width - 56) / 2, 
+    backgroundColor: '#fff', 
+    borderRadius: 24, 
+    padding: 20, 
+    flexDirection: 'column', 
+    alignItems: 'flex-start', 
+    shadowColor: '#64748b', shadowOpacity: 0.1, shadowRadius: 15, elevation: 5,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)'
+  },
+  statIconContainer: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
+  statInfo: { width: '100%' },
+  statValue: { fontSize: 24, fontWeight: '900', letterSpacing: -0.8 },
+  statLabel: { fontSize: 13, color: '#64748b', fontWeight: '800', marginBottom: 4, textTransform: 'capitalize' },
+  
+  actionsGrid: { paddingHorizontal: 20, gap: 15 },
+  actionCard: { 
+    borderRadius: 24, overflow: 'hidden', 
+    shadowColor: '#4f46e5', shadowOpacity: 0.08, shadowRadius: 20, elevation: 6,
+    borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)'
+  },
+  actionCardGradient: { flexDirection: 'row', alignItems: 'center', padding: 20 },
+  actionIcon: { width: 60, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: 20, elevation: 2 },
+  actionLabel: { fontSize: 18, fontWeight: '900', color: '#0f172a', letterSpacing: -0.4 },
+  actionDesc: { fontSize: 14, color: '#64748b', marginTop: 4, fontWeight: '600' },
+  chevron: { marginLeft: 'auto', opacity: 0.3 },
 });

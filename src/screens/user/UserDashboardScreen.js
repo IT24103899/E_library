@@ -9,6 +9,8 @@ import { getBooks, getReadingStats, getBookshelf, getActivity } from '../../serv
 import { API_BASE_URL } from '../../config/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeInDown, FadeInRight, ZoomIn } from 'react-native-reanimated';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const { width } = Dimensions.get('window');
 
@@ -21,7 +23,9 @@ const QUOTES = [
 
 export default function UserDashboardScreen({ navigation }) {
   const { user } = useAuth();
+  const { colors, dark, toggleTheme } = useTheme();
   const [imgError, setImgError] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [recommended, setRecommended] = useState([]);
@@ -96,101 +100,112 @@ export default function UserDashboardScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor="#fff" />}
       >
-        {/* Dynamic Premium Header */}
-        <LinearGradient colors={['#1e1b4b', '#4338ca', '#6366f1']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        {/* Premium Header */}
+        <LinearGradient colors={['#1e1b4b', '#312e81', '#4338ca']} style={styles.header} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
           <View style={styles.headerAccent1} />
           <View style={styles.headerAccent2} />
           
-          <Animated.View entering={FadeInDown.duration(600).delay(100)} style={styles.headerTop}>
+          <Animated.View entering={FadeInDown.duration(800).delay(100)} style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] || 'Reader'} 👋</Text>
-              <Text style={styles.subtext}>Ready for a new adventure?</Text>
+              <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] || 'Explorer'} 📚</Text>
+              <Text style={styles.subtext}>Your library is ready for you</Text>
             </View>
-            <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('Profile')}>
-              {user?.profileImage && !imgError ? (
-                <Image 
-                  source={{ uri: `${API_BASE_URL.replace('/api/', '').replace(/\/$/, '')}${user.profileImage.startsWith('/') ? '' : '/'}${user.profileImage.replace(/^\//, '')}` }} 
-                  style={styles.avatarImage} 
-                  onError={() => setImgError(true)}
-                />
-              ) : (
-                <LinearGradient colors={['#fbbf24', '#f59e0b']} style={styles.avatar}>
-                  <Text style={styles.avatarText}>{(user?.name || '?')[0].toUpperCase()}</Text>
-                </LinearGradient>
-              )}
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.themeToggle} onPress={toggleTheme}>
+                <Ionicons name={dark ? "sunny" : "moon"} size={22} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('Profile')}>
+                {user?.profileImage && !imgError ? (
+                  <Image 
+                    source={{ uri: `${API_BASE_URL.replace('/api/', '').replace(/\/$/, '')}${user.profileImage.startsWith('/') ? '' : '/'}${user.profileImage.replace(/^\//, '')}` }} 
+                    style={styles.avatarImage} 
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <LinearGradient colors={['#4f46e5', '#a855f7']} style={styles.avatar}>
+                    <Text style={styles.avatarText}>{(user?.name || '?')[0].toUpperCase()}</Text>
+                  </LinearGradient>
+                )}
+              </TouchableOpacity>
+            </View>
           </Animated.View>
 
-          {/* Premium Action Hub */}
-          <Animated.View entering={ZoomIn.duration(600).delay(200)} style={styles.actionHub}>
+          {/* Quick Stats Overlay */}
+          <Animated.View entering={ZoomIn.duration(800).delay(300)} style={[styles.actionHub, { backgroundColor: dark ? '#1e293b' : '#ffffff' }]}>
               <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('Search')} activeOpacity={0.7}>
                   <View style={[styles.actionIcon, { backgroundColor: '#eef2ff' }]}>
-                      <Ionicons name="search" size={26} color="#4f46e5" />
+                      <Ionicons name="search" size={24} color="#4f46e5" />
                   </View>
-                  <Text style={styles.actionLabel}>Search</Text>
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>Explore</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('Search', { screen: 'QRScanner' })} activeOpacity={0.7}>
-                  <View style={[styles.actionIcon, { backgroundColor: '#fdf2f8' }]}>
-                      <Ionicons name="scan" size={26} color="#db2777" />
+                  <View style={[styles.actionIcon, { backgroundColor: '#fff1f2' }]}>
+                      <Ionicons name="qr-code" size={24} color="#e11d48" />
                   </View>
-                  <Text style={styles.actionLabel}>Scan QR</Text>
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>Scan</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('Books')} activeOpacity={0.7}>
-                  <View style={[styles.actionIcon, { backgroundColor: '#f0fdf4' }]}>
-                      <Ionicons name="compass" size={26} color="#16a34a" />
+                  <View style={[styles.actionIcon, { backgroundColor: '#ecfdf5' }]}>
+                      <Ionicons name="sparkles" size={24} color="#059669" />
                   </View>
-                  <Text style={styles.actionLabel}>Explore</Text>
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>New</Text>
               </TouchableOpacity>
           </Animated.View>
         </LinearGradient>
 
         {/* Quote Section */}
         <Animated.View entering={FadeInDown.duration(600).delay(300)} style={styles.quoteWrapper}>
-            <View style={styles.quoteCard}>
-                <Ionicons name="chatbubble-ellipses" size={36} color="rgba(99, 102, 241, 0.2)" style={styles.quoteIconBg} />
-                <Text style={styles.quoteText}>"{quote.text}"</Text>
-                <Text style={styles.quoteAuthor}>— {quote.author}</Text>
+            <View style={[styles.quoteCard, { backgroundColor: colors.surface }]}>
+                <View style={styles.quoteIconBadge}>
+                  <Ionicons name="quote" size={20} color="#4f46e5" />
+                </View>
+                <Text style={[styles.quoteText, { color: colors.text }]}>"{quote.text}"</Text>
+                <View style={styles.quoteDivider} />
+                <Text style={[styles.quoteAuthor, { color: colors.primary }]}>{quote.author}</Text>
             </View>
         </Animated.View>
 
+
         {/* Stats Cluster */}
         <Animated.View entering={FadeInDown.duration(600).delay(400)} style={styles.statsCluster}>
-          <View style={styles.statBox}>
-            <LinearGradient colors={['#fee2e2', '#fecaca']} style={styles.statIconBadge}>
-              <Ionicons name="book" size={18} color="#ef4444" />
+          <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
+            <LinearGradient colors={dark ? ['#450a0a', '#7f1d1d'] : ['#fee2e2', '#fecaca']} style={styles.statIconBadge}>
+              <Ionicons name="book" size={18} color={dark ? "#f87171" : "#ef4444"} />
             </LinearGradient>
-            <Text style={styles.statVal}>{stats?.booksRead || 0}</Text>
-            <Text style={styles.statSub}>Books Read</Text>
+            <Text style={[styles.statVal, { color: colors.text }]}>{stats?.booksRead || 0}</Text>
+            <Text style={[styles.statSub, { color: colors.textSecondary }]}>Books Read</Text>
           </View>
-          <View style={styles.statBox}>
-            <LinearGradient colors={['#e0e7ff', '#c7d2fe']} style={styles.statIconBadge}>
-              <Ionicons name="document-text" size={18} color="#4f46e5" />
+          <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
+            <LinearGradient colors={dark ? ['#1e1b4b', '#312e81'] : ['#e0e7ff', '#c7d2fe']} style={styles.statIconBadge}>
+              <Ionicons name="document-text" size={18} color={dark ? "#818cf8" : "#4f46e5"} />
             </LinearGradient>
-            <Text style={styles.statVal}>{stats?.pagesRead || 0}</Text>
-            <Text style={styles.statSub}>Total Pages</Text>
+            <Text style={[styles.statVal, { color: colors.text }]}>{stats?.pagesRead || 0}</Text>
+            <Text style={[styles.statSub, { color: colors.textSecondary }]}>Total Pages</Text>
           </View>
-          <View style={styles.statBox}>
-            <LinearGradient colors={['#fef3c7', '#fde68a']} style={styles.statIconBadge}>
-              <Ionicons name="flame" size={18} color="#d97706" />
+          <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
+            <LinearGradient colors={dark ? ['#451a03', '#78350f'] : ['#fef3c7', '#fde68a']} style={styles.statIconBadge}>
+              <Ionicons name="flame" size={18} color={dark ? "#fbbf24" : "#d97706"} />
             </LinearGradient>
-            <Text style={styles.statVal}>{stats?.streak || 0}</Text>
-            <Text style={styles.statSub}>Days Streak</Text>
+            <Text style={[styles.statVal, { color: colors.text }]}>{stats?.streak || 0}</Text>
+            <Text style={[styles.statSub, { color: colors.textSecondary }]}>Days Streak</Text>
           </View>
         </Animated.View>
+
 
         {/* Continue Reading Section */}
         <Animated.View entering={FadeInDown.duration(600).delay(500)}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Continue Reading</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Continue Reading</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Bookshelf')} style={styles.seeAllBtn}>
-              <Text style={styles.seeAllText}>See all</Text>
-              <Ionicons name="arrow-forward" size={16} color="#4f46e5" style={{ marginLeft: 4 }} />
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See all</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.primary} style={{ marginLeft: 4 }} />
             </TouchableOpacity>
           </View>
 
+
           {continueReading ? (
             <TouchableOpacity
-              style={styles.premiumContinueCard}
+              style={[styles.premiumContinueCard, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : colors.primary }]}
               activeOpacity={0.9}
               onPress={() => navigation.navigate('Books', { 
                 screen: 'Reader', 
@@ -211,27 +226,27 @@ export default function UserDashboardScreen({ navigation }) {
                   }}
                 />
               ) : (
-                <LinearGradient colors={['#6366f1', '#a855f7']} style={styles.continueImgPlaceholder}>
+                <LinearGradient colors={dark ? ['#312e81', '#581c87'] : ['#6366f1', '#a855f7']} style={styles.continueImgPlaceholder}>
                   <Ionicons name="library" size={32} color="rgba(255,255,255,0.7)" />
                 </LinearGradient>
               )}
               
               <View style={styles.continueDetails}>
-                <Text style={styles.continueTitle} numberOfLines={2}>
+                <Text style={[styles.continueTitle, { color: colors.text }]} numberOfLines={2}>
                   {(continueReading.title && continueReading.title !== 'Unknown Book') ? continueReading.title : 'Mystery Title'}
                 </Text>
-                <Text style={styles.continueAuthor} numberOfLines={1}>
+                <Text style={[styles.continueAuthor, { color: colors.textSecondary }]} numberOfLines={1}>
                   {(continueReading.author && continueReading.author !== 'Unknown') ? continueReading.author : 'Unknown Source'}
                 </Text>
                 <View style={styles.progressRow}>
-                    <View style={styles.pgBar}>
+                    <View style={[styles.pgBar, { backgroundColor: dark ? '#334155' : '#f1f5f9' }]}>
                         <LinearGradient 
                            colors={['#4f46e5', '#a855f7']} 
-                           style={[styles.pgFill, { width: `${continueReading.totalPages > 0 ? Math.min(100, (continueReading.pageNumber / continueReading.totalPages) * 100) : 0}%` }]} 
+                           style={[styles.pgFill, { width: `${continueReading.totalPages > 0 ? Math.max(5, (continueReading.pageNumber / continueReading.totalPages) * 100) : 0}%` }]} 
                            start={{x:0, y:0}} end={{x:1, y:0}}
                         />
                     </View>
-                    <Text style={styles.pgPercent}>
+                    <Text style={[styles.pgPercent, { color: colors.primary }]}>
                       {continueReading.totalPages > 0 ? Math.round((continueReading.pageNumber / continueReading.totalPages) * 100) : 0}%
                     </Text>
                 </View>
@@ -240,6 +255,7 @@ export default function UserDashboardScreen({ navigation }) {
                   <Ionicons name="play" size={20} color="#fff" style={{ marginLeft: 3 }} />
               </LinearGradient>
             </TouchableOpacity>
+
           ) : (
             <View style={styles.creativeEmptyState}>
               <View style={styles.emptyIconBg}>
@@ -259,10 +275,11 @@ export default function UserDashboardScreen({ navigation }) {
         <Animated.View entering={FadeInDown.duration(600).delay(600)}>
           <View style={[styles.sectionHeader, { marginTop: 35 }]}>
             <View>
-              <Text style={styles.sectionTitle}>Curated for You</Text>
-              <Text style={styles.tagline}>Fresh picks based on your taste</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Curated for You</Text>
+              <Text style={[styles.tagline, { color: colors.textSecondary }]}>Fresh picks based on your taste</Text>
             </View>
           </View>
+
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modernHorizontalScroll}>
             {recommended.map((book, index) => (
@@ -272,18 +289,19 @@ export default function UserDashboardScreen({ navigation }) {
                   activeOpacity={0.8}
                   onPress={() => navigation.navigate('Books', { screen: 'BookDetail', params: { bookId: book._id, book } })}
                 >
-                  <View style={styles.bookShadow}>
+                  <View style={[styles.bookShadow, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#0f172a' }]}>
                       {book.coverUrl ? (
                          <Image source={{ uri: book.coverUrl }} style={styles.modernCover} />
                       ) : (
-                         <LinearGradient colors={['#94a3b8', '#cbd5e1']} style={styles.modernCoverPlaceholder}>
+                         <LinearGradient colors={dark ? ['#1e293b', '#334155'] : ['#94a3b8', '#cbd5e1']} style={styles.modernCoverPlaceholder}>
                             <Ionicons name="image-outline" size={40} color="#fff" />
                          </LinearGradient>
                       )}
                   </View>
-                  <Text style={styles.modernTitle} numberOfLines={1}>{book.title}</Text>
-                  <Text style={styles.modernAuthor} numberOfLines={1}>{book.author}</Text>
+                  <Text style={[styles.modernTitle, { color: colors.text }]} numberOfLines={1}>{book.title}</Text>
+                  <Text style={[styles.modernAuthor, { color: colors.textSecondary }]} numberOfLines={1}>{book.author}</Text>
                 </TouchableOpacity>
+
               </Animated.View>
             ))}
           </ScrollView>
@@ -295,17 +313,19 @@ export default function UserDashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fcfcfd' }, // ultra light base
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fcfcfd' },
-  content: { paddingBottom: 110 },
+  container: { flex: 1 }, 
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  content: { paddingBottom: 130 },
+
   header: {
     paddingTop: 75,
     paddingHorizontal: 25,
-    paddingBottom: 80,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+    paddingBottom: 90,
+    borderBottomLeftRadius: 45,
+    borderBottomRightRadius: 45,
     position: 'relative',
     overflow: 'hidden',
+    elevation: 10,
   },
   headerAccent1: {
     position: 'absolute',
@@ -314,7 +334,7 @@ const styles = StyleSheet.create({
     width: 250,
     height: 250,
     borderRadius: 125,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   headerAccent2: {
     position: 'absolute',
@@ -323,22 +343,25 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
-  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 1 },
-  greeting: { fontSize: 32, fontWeight: '900', color: '#ffffff', letterSpacing: -0.5 },
-  subtext: { fontSize: 16, color: 'rgba(255,255,255,0.85)', marginTop: 6, fontWeight: '500' },
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 1, marginBottom: 20 },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
+  themeToggle: { marginRight: 15, width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center' },
+  greeting: { fontSize: 32, fontWeight: '900', color: '#ffffff', letterSpacing: -0.8 },
+  subtext: { fontSize: 16, color: 'rgba(255,255,255,0.9)', marginTop: 4, fontWeight: '600' },
+
   avatarContainer: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.3)',
-    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 8,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.5)',
+    shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, elevation: 10,
   },
   avatar: { 
     flex: 1,
-    borderRadius: 25,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -348,91 +371,90 @@ const styles = StyleSheet.create({
   actionHub: {
       flexDirection: 'row',
       justifyContent: 'space-evenly',
-      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-      marginHorizontal: 0,
-      marginTop: 35,
-      paddingVertical: 20,
-      borderRadius: 28,
-      shadowColor: '#4f46e5', shadowOpacity: 0.2, shadowRadius: 25, elevation: 15,
+      marginHorizontal: 10,
+      marginTop: 25,
+      paddingVertical: 22,
+      borderRadius: 32,
+      shadowColor: '#4f46e5', shadowOpacity: 0.25, shadowRadius: 30, elevation: 20,
   },
   actionItem: { alignItems: 'center', width: '30%' },
-  actionIcon: { width: 60, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  actionLabel: { fontSize: 13, color: '#334155', fontWeight: '800' },
+  actionIcon: { width: 64, height: 64, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 10, elevation: 4 },
+  actionLabel: { fontSize: 14, fontWeight: '900', letterSpacing: 0.2 },
 
-  quoteWrapper: { paddingHorizontal: 25, marginTop: -30, zIndex: 5 },
+  quoteWrapper: { paddingHorizontal: 25, marginTop: -35, zIndex: 10 },
   quoteCard: {
-      backgroundColor: '#fff',
-      borderRadius: 28,
+      borderRadius: 32,
       padding: 24,
-      shadowColor: '#94a3b8', shadowOpacity: 0.15, shadowRadius: 15, elevation: 8,
+      shadowColor: '#64748b', shadowOpacity: 0.12, shadowRadius: 20, elevation: 12,
       position: 'relative',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: 'rgba(0,0,0,0.02)',
   },
-  quoteIconBg: { position: 'absolute', top: 15, left: 20 },
-  quoteText: { fontSize: 17, fontStyle: 'italic', color: '#1e293b', lineHeight: 26, fontWeight: '600', marginTop: 15 },
-  quoteAuthor: { fontSize: 14, color: '#64748b', marginTop: 15, fontWeight: '800', alignSelf: 'flex-end' },
+  quoteIconBadge: { position: 'absolute', top: 18, left: 18, opacity: 0.15 },
+  quoteText: { fontSize: 17, fontStyle: 'italic', lineHeight: 28, fontWeight: '700', marginTop: 10, paddingHorizontal: 10 },
+  quoteDivider: { height: 1, width: 40, backgroundColor: '#4f46e5', alignSelf: 'flex-end', marginTop: 15, opacity: 0.3 },
+  quoteAuthor: { fontSize: 13, marginTop: 10, fontWeight: '900', alignSelf: 'flex-end', textTransform: 'uppercase', letterSpacing: 1 },
 
-  statsCluster: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, marginTop: 30 },
+  statsCluster: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 25, marginTop: 35 },
   statBox: { 
-      width: (width - 70) / 3, 
-      backgroundColor: '#fff', 
-      paddingVertical: 20, 
-      borderRadius: 24, 
+      width: (width - 74) / 3, 
+      paddingVertical: 24, 
+      borderRadius: 28, 
       alignItems: 'center',
-      shadowColor: '#cbd5e1', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5,
+      shadowColor: '#94a3b8', shadowOpacity: 0.15, shadowRadius: 15, elevation: 8,
   },
-  statIconBadge: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  statVal: { fontSize: 24, fontWeight: '900', color: '#0f172a' },
-  statSub: { fontSize: 11, color: '#64748b', fontWeight: '800', marginTop: 4, textTransform: 'uppercase' },
+  statIconBadge: { width: 44, height: 44, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  statVal: { fontSize: 26, fontWeight: '900' },
+  statSub: { fontSize: 10, fontWeight: '900', marginTop: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 25, marginTop: 40, marginBottom: 20 },
-  sectionTitle: { fontSize: 24, fontWeight: '900', color: '#0f172a', letterSpacing: -0.5 },
-  tagline: { fontSize: 14, color: '#64748b', marginTop: 4, fontWeight: '500' },
-  seeAllBtn: { flexDirection: 'row', alignItems: 'center' },
-  seeAllText: { color: '#4f46e5', fontWeight: '700', fontSize: 14 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 25, marginTop: 45, marginBottom: 20 },
+  sectionTitle: { fontSize: 26, fontWeight: '900', letterSpacing: -0.8 },
+  tagline: { fontSize: 14, marginTop: 4, fontWeight: '600' },
+  seeAllBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(79, 70, 229, 0.08)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  seeAllText: { fontWeight: '800', fontSize: 13 },
 
   premiumContinueCard: {
       flexDirection: 'row',
-      backgroundColor: '#fff',
       marginHorizontal: 25,
-      borderRadius: 28,
-      padding: 16,
+      borderRadius: 32,
+      padding: 18,
       alignItems: 'center',
-      shadowColor: '#4f46e5', shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: {height: 8, width: 0}, elevation: 8,
+      shadowColor: '#4f46e5', shadowOpacity: 0.18, shadowRadius: 25, elevation: 15,
   },
-  continueImg: { width: 90, height: 130, borderRadius: 20, backgroundColor: '#f1f5f9' },
-  continueImgPlaceholder: { width: 90, height: 130, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
+  continueImg: { width: 95, height: 135, borderRadius: 22, backgroundColor: '#f1f5f9' },
+  continueImgPlaceholder: { width: 95, height: 135, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
   continueDetails: { flex: 1, marginLeft: 20 },
-  continueTitle: { fontSize: 19, fontWeight: '900', color: '#0f172a', marginBottom: 6 },
-  continueAuthor: { fontSize: 14, color: '#64748b', fontWeight: '500' },
-  progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20 },
-  pgBar: { flex: 1, height: 8, backgroundColor: '#f1f5f9', borderRadius: 4, marginRight: 12, overflow: 'hidden' },
-  pgFill: { height: '100%', borderRadius: 4 },
-  pgPercent: { fontSize: 14, fontWeight: '900', color: '#4f46e5', width: 35 },
+  continueTitle: { fontSize: 20, fontWeight: '900', marginBottom: 6, letterSpacing: -0.5 },
+  continueAuthor: { fontSize: 14, fontWeight: '600', opacity: 0.7 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 22 },
+  pgBar: { flex: 1, height: 10, borderRadius: 5, marginRight: 12, overflow: 'hidden' },
+  pgFill: { height: '100%', borderRadius: 5 },
+  pgPercent: { fontSize: 14, fontWeight: '900', width: 40 },
   playIconButton: { 
-      width: 50, height: 50, borderRadius: 25, 
+      width: 54, height: 54, borderRadius: 27, 
       justifyContent: 'center', alignItems: 'center', 
-      shadowColor: '#4f46e5', shadowOpacity: 0.4, shadowRadius: 10, elevation: 8 
+      shadowColor: '#4f46e5', shadowOpacity: 0.45, shadowRadius: 12, elevation: 10 
   },
 
   creativeEmptyState: { 
-      alignItems: 'center', backgroundColor: '#fff', marginHorizontal: 25, 
-      borderRadius: 28, padding: 35, borderStyle: 'dashed', borderWidth: 2, borderColor: '#e2e8f0' 
+      alignItems: 'center', marginHorizontal: 25, 
+      borderRadius: 32, padding: 40, borderStyle: 'dashed', borderWidth: 2, borderColor: 'rgba(79, 70, 229, 0.2)' 
   },
-  emptyIconBg: { width: 70, height: 70, borderRadius: 35, backgroundColor: '#e0e7ff', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  emptyText: { fontSize: 18, color: '#334155', fontWeight: '800', marginBottom: 20 },
-  vibrantExploreBtn: { borderRadius: 20, overflow: 'hidden', shadowColor: '#4f46e5', shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
-  vibrantExploreBtnGradient: { paddingHorizontal: 30, paddingVertical: 14 },
-  vibrantExploreBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
+  emptyIconBg: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#eef2ff', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  emptyText: { fontSize: 19, fontWeight: '900', marginBottom: 25 },
+  vibrantExploreBtn: { borderRadius: 20, overflow: 'hidden', shadowColor: '#4f46e5', shadowOpacity: 0.4, shadowRadius: 15, elevation: 8 },
+  vibrantExploreBtnGradient: { paddingHorizontal: 35, paddingVertical: 16 },
+  vibrantExploreBtnText: { color: '#fff', fontWeight: '900', fontSize: 16 },
 
-  modernHorizontalScroll: { paddingHorizontal: 25, paddingBottom: 25 },
-  modernBookCard: { width: 150, marginRight: 22 },
+  modernHorizontalScroll: { paddingHorizontal: 25, paddingBottom: 30 },
+  modernBookCard: { width: 160, marginRight: 25 },
   bookShadow: {
-      shadowColor: '#0f172a', shadowOpacity: 0.15, shadowRadius: 15, shadowOffset: {height: 8, width: 0}, elevation: 8,
-      borderRadius: 24, backgroundColor: '#fff', marginBottom: 15
+      shadowColor: '#0f172a', shadowOpacity: 0.2, shadowRadius: 18, elevation: 12,
+      borderRadius: 28, marginBottom: 16
   },
-  modernCover: { width: '100%', height: 220, borderRadius: 24 },
-  modernCoverPlaceholder: { width: '100%', height: 220, borderRadius: 24, justifyContent: 'center', alignItems: 'center' },
-  modernTitle: { fontSize: 16, fontWeight: '800', color: '#0f172a', paddingHorizontal: 2 },
-  modernAuthor: { fontSize: 14, color: '#64748b', marginTop: 4, paddingHorizontal: 2, fontWeight: '500' },
+  modernCover: { width: '100%', height: 240, borderRadius: 28 },
+  modernCoverPlaceholder: { width: '100%', height: 240, borderRadius: 28, justifyContent: 'center', alignItems: 'center' },
+  modernTitle: { fontSize: 17, fontWeight: '900', paddingHorizontal: 4, letterSpacing: -0.4 },
+  modernAuthor: { fontSize: 14, marginTop: 5, paddingHorizontal: 4, fontWeight: '600', opacity: 0.6 },
 });

@@ -8,12 +8,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { saveReadingProgress, getReadingProgress, logReadingVelocity, getReadingVelocityStats, getBookmarks, addBookmark, deleteBookmark } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { API_BASE_URL } from '../../config/api';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const { width } = Dimensions.get('window');
 
 export default function ReaderScreen({ route, navigation }) {
   const { bookId, bookTitle, pdfUrl, totalPages: paramTotalPages } = route.params;
   const { user } = useAuth();
+  const { colors, dark } = useTheme();
+
 
   console.log('📖 [Reader] bookId:', bookId, '| pdfUrl:', pdfUrl);
 
@@ -249,9 +253,10 @@ export default function ReaderScreen({ route, navigation }) {
 </html>`;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+
       {/* Top bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { backgroundColor: dark ? colors.surface : colors.primary }]}>
         <TouchableOpacity 
           style={styles.exitBtn} 
           onPress={async () => {
@@ -289,10 +294,12 @@ export default function ReaderScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
+
       {/* Progress bar */}
-      <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { width: `${progressPct}%` }]} />
+      <View style={[styles.progressBarBg, { backgroundColor: dark ? '#1e293b' : '#333' }]}>
+        <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.accent }]} />
       </View>
+
 
       {/* PDF Viewer — Localized PDF.js for single-page control */}
       {pdfUrl ? (
@@ -329,51 +336,51 @@ export default function ReaderScreen({ route, navigation }) {
 
       {/* Controls panel */}
       {showControls && (
-        <View style={styles.controls}>
+        <View style={[styles.controls, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
           {/* Page navigation */}
           <View style={styles.navRow}>
             <TouchableOpacity style={styles.navBtn} onPress={goPrev} disabled={currentPage <= 1}>
-              <Ionicons name="chevron-back" size={20} color={currentPage <= 1 ? '#999' : '#1e3a5f'} />
+              <Ionicons name="chevron-back" size={20} color={currentPage <= 1 ? colors.textSecondary : colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setShowJump(true)} style={styles.pageIndicator}>
-              <Text style={styles.pageText}>{currentPage} / {totalPages}</Text>
-              <Text style={styles.pctText}>{progressPct}%</Text>
+              <Text style={[styles.pageText, { color: colors.text }]}>{currentPage} / {totalPages}</Text>
+              <Text style={[styles.pctText, { color: colors.textSecondary }]}>{progressPct}%</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.navBtn} onPress={goNext} disabled={currentPage >= totalPages}>
-              <Ionicons name="chevron-forward" size={20} color={currentPage >= totalPages ? '#999' : '#1e3a5f'} />
+              <Ionicons name="chevron-forward" size={20} color={currentPage >= totalPages ? colors.textSecondary : colors.primary} />
             </TouchableOpacity>
           </View>
 
           {/* Action buttons */}
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.actionBtn} onPress={zoomOut}>
-              <Ionicons name="remove-outline" size={18} color="#333" />
-              <Text style={styles.actionLabel}>Zoom Out</Text>
+              <Ionicons name="remove-outline" size={18} color={colors.text} />
+              <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>Zoom Out</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionBtn} onPress={zoomIn}>
-              <Ionicons name="add-outline" size={18} color="#333" />
-              <Text style={styles.actionLabel}>Zoom In</Text>
+              <Ionicons name="add-outline" size={18} color={colors.text} />
+              <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>Zoom In</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.actionBtn, isBookmarked && styles.actionBtnActive]} onPress={handleAddBookmark}>
-              <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color={isBookmarked ? '#1e3a5f' : '#333'} />
-              <Text style={styles.actionLabel}>Bookmark</Text>
+            <TouchableOpacity style={[styles.actionBtn, isBookmarked && { backgroundColor: dark ? 'rgba(129, 140, 248, 0.1)' : '#e3f2fd' }]} onPress={handleAddBookmark}>
+              <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color={isBookmarked ? colors.primary : colors.text} />
+              <Text style={[styles.actionLabel, { color: isBookmarked ? colors.primary : colors.textSecondary }]}>Bookmark</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionBtn} onPress={() => setShowBookmarks(true)}>
-              <Ionicons name="list-outline" size={18} color="#333" />
-              <Text style={styles.actionLabel}>Bookmarks</Text>
+              <Ionicons name="list-outline" size={18} color={colors.text} />
+              <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>Bookmarks</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionBtn, autoAdvance && styles.actionBtnActive]}
+              style={[styles.actionBtn, autoAdvance && { backgroundColor: dark ? 'rgba(129, 140, 248, 0.1)' : '#e3f2fd' }]}
               onPress={() => setAutoAdvance((v) => !v)}
             >
-              <Ionicons name={autoAdvance ? 'pause-circle' : 'play-circle-outline'} size={18} color={autoAdvance ? '#1e3a5f' : '#333'} />
-              <Text style={styles.actionLabel}>{autoAdvance ? `Auto (${countdown}s)` : 'Auto'}</Text>
+              <Ionicons name={autoAdvance ? 'pause-circle' : 'play-circle-outline'} size={18} color={autoAdvance ? colors.primary : colors.text} />
+              <Text style={[styles.actionLabel, { color: autoAdvance ? colors.primary : colors.textSecondary }]}>{autoAdvance ? `Auto (${countdown}s)` : 'Auto'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -382,21 +389,22 @@ export default function ReaderScreen({ route, navigation }) {
       {/* Jump to page modal */}
       <Modal visible={showJump} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Jump to Page</Text>
+          <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Jump to Page</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, { backgroundColor: dark ? colors.background : '#fff', color: colors.text, borderColor: colors.border }]}
               value={jumpPage}
               onChangeText={setJumpPage}
               keyboardType="numeric"
               placeholder={`1 – ${totalPages}`}
+              placeholderTextColor={colors.textSecondary}
               autoFocus
             />
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowJump(false)}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
+              <TouchableOpacity style={[styles.modalCancel, { borderColor: colors.border }]} onPress={() => setShowJump(false)}>
+                <Text style={[styles.modalCancelText, { color: colors.textSecondary }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirm} onPress={jumpToPage}>
+              <TouchableOpacity style={[styles.modalConfirm, { backgroundColor: colors.primary }]} onPress={jumpToPage}>
                 <Text style={styles.modalConfirmText}>Go</Text>
               </TouchableOpacity>
             </View>
@@ -404,31 +412,32 @@ export default function ReaderScreen({ route, navigation }) {
         </View>
       </Modal>
 
+
       {/* Bookmarks panel */}
       <Modal visible={showBookmarks} transparent animationType="slide">
         <View style={styles.bookmarksOverlay}>
-          <View style={styles.bookmarksPanel}>
+          <View style={[styles.bookmarksPanel, { backgroundColor: colors.surface }]}>
             <View style={styles.bookmarkHeader}>
-              <Text style={styles.bookmarkTitle}>Bookmarks</Text>
+              <Text style={[styles.bookmarkTitle, { color: colors.text }]}>Bookmarks</Text>
               <TouchableOpacity onPress={() => setShowBookmarks(false)}>
-                <Ionicons name="close" size={22} color="#333" />
+                <Ionicons name="close" size={22} color={colors.text} />
               </TouchableOpacity>
             </View>
             {bookmarks.length === 0 ? (
-              <Text style={styles.emptyText}>No bookmarks yet. Tap the bookmark icon while reading.</Text>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No bookmarks yet. Tap the bookmark icon while reading.</Text>
             ) : (
               <ScrollView>
                 {bookmarks.map((b) => (
-                  <View key={b._id} style={styles.bookmarkItem}>
+                  <View key={b._id} style={[styles.bookmarkItem, { borderColor: colors.border }]}>
                     <TouchableOpacity
                       style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}
                       onPress={() => { setCurrentPage(b.pageNumber); sendToWebView(`goToPage(${b.pageNumber})`); setShowBookmarks(false); }}
                     >
-                      <Ionicons name="bookmark" size={16} color="#1e3a5f" />
-                      <Text style={styles.bookmarkPageText}>Page {b.pageNumber}</Text>
+                      <Ionicons name="bookmark" size={16} color={colors.primary} />
+                      <Text style={[styles.bookmarkPageText, { color: colors.text }]}>Page {b.pageNumber}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => handleDeleteBookmark(b._id)}>
-                      <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                      <Ionicons name="trash-outline" size={18} color={colors.error} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -437,6 +446,7 @@ export default function ReaderScreen({ route, navigation }) {
           </View>
         </View>
       </Modal>
+
     </View>
   );
 }
@@ -451,11 +461,12 @@ const styles = StyleSheet.create({
   exitText: { color: '#fff', fontSize: 13, fontWeight: '700', marginLeft: 2 },
   bookTitle: { flex: 1, color: '#fff', fontSize: 15, fontWeight: '600' },
   progressBarBg: { height: 3, backgroundColor: '#333' },
-  progressBarFill: { height: 3, backgroundColor: '#4fc3f7' },
+  progressBarFill: { height: 3 },
   webview: { flex: 1 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.9)' },
-  loadingText: { marginTop: 12, color: '#1e3a5f', fontSize: 15 },
-  controls: { backgroundColor: '#fff', borderTopWidth: 1, borderColor: '#eee' },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  loadingText: { marginTop: 12, color: '#fff', fontSize: 15 },
+  controls: { borderTopWidth: 1 },
+
   navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, gap: 20 },
   navBtn: { padding: 8 },
   pageIndicator: { alignItems: 'center' },

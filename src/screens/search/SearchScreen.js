@@ -5,9 +5,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
+
 
 export default function SearchScreen({ navigation }) {
+  const { colors, dark } = useTheme();
   const [query, setQuery] = useState('');
+
   const [authorFilter, setAuthorFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
   const [results, setResults] = useState([]);
@@ -90,72 +94,80 @@ export default function SearchScreen({ navigation }) {
 
   const renderResult = ({ item }) => (
     <TouchableOpacity
-      style={styles.resultCard}
+      style={[styles.resultCard, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#4f46e5' }]}
       onPress={() => navigation.navigate('BookDetail', { bookId: item._id, book: item })}
     >
       <View style={styles.resultCover}>
         {item.coverUrl
           ? <Image source={{ uri: item.coverUrl }} style={styles.coverImg} resizeMode="cover" />
-          : <View style={styles.coverPlaceholder}><Ionicons name="book" size={22} color="#fff" /></View>
+          : <View style={[styles.coverPlaceholder, { backgroundColor: colors.primary }]}><Ionicons name="book" size={22} color="#fff" /></View>
         }
       </View>
       <View style={styles.resultInfo}>
-        <Text style={styles.resultTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.resultAuthor}>{item.author}</Text>
-        {item.category && <Text style={styles.resultGenre}>{item.category}</Text>}
+        <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
+        <Text style={[styles.resultAuthor, { color: colors.textSecondary }]}>{item.author}</Text>
+        {item.category && <Text style={[styles.resultGenre, { color: colors.primary }]}>{item.category}</Text>}
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#ccc" />
+      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
     </TouchableOpacity>
+
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: dark ? colors.surface : colors.primary }]}>
         <Text style={styles.headerTitle}>🔍 Search Hub</Text>
       </View>
 
+
       {/* AI Idea Box */}
-      <View style={[styles.aiBox, { marginTop: 20 }]}>
+      <View style={[styles.aiBox, { backgroundColor: colors.surface, borderColor: dark ? colors.primary : '#e0e7ff', shadowColor: colors.primary }]}>
         <View style={styles.aiHeader}>
-          <Ionicons name="sparkles" size={16} color="#6366f1" />
-          <Text style={styles.aiTitle}>AI Genius Suggestion</Text>
+          <Ionicons name="sparkles" size={16} color={colors.primary} />
+          <Text style={[styles.aiTitle, { color: colors.primary }]}>AI Genius Suggestion</Text>
         </View>
-        <Text style={styles.aiSubText}>Tell me what kind of book you want...</Text>
+        <Text style={[styles.aiSubText, { color: colors.textSecondary }]}>Tell me what kind of book you want...</Text>
         <View style={styles.aiInputRow}>
           <TextInput
-            style={styles.aiInput}
+            style={[styles.aiInput, { backgroundColor: dark ? colors.background : '#f8fafc', color: colors.text, borderColor: colors.border }]}
             placeholder="e.g., detectives in London, scary space stories..."
+            placeholderTextColor={colors.textSecondary}
             value={aiIdea}
             onChangeText={setAiIdea}
             onSubmitEditing={handleAiIdeaSearch}
           />
-          <TouchableOpacity style={styles.aiActionBtn} onPress={handleAiIdeaSearch}>
+          <TouchableOpacity style={[styles.aiActionBtn, { backgroundColor: colors.primary }]} onPress={handleAiIdeaSearch}>
             <Ionicons name="arrow-forward" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
 
+
       {/* Search history - Always visible so user can quickly switch ideas */}
       {history.length > 0 && (
         <View style={styles.historySection}>
           <View style={styles.historyHeader}>
-            <Text style={styles.historyTitle}>Recent Searches</Text>
+            <Text style={[styles.historyTitle, { color: colors.text }]}>Recent Searches</Text>
+
             <TouchableOpacity onPress={handleClearHistory}>
-              <Text style={styles.clearText}>Clear All</Text>
+              <Text style={[styles.clearText, { color: colors.error }]}>Clear All</Text>
             </TouchableOpacity>
           </View>
+
           {history.map((h, idx) => {
             const searchTerm = h.term || h.searchQuery || h.query || (typeof h === 'string' ? h : '');
             return (
             <TouchableOpacity
               key={idx}
-              style={styles.historyChip}
+              style={[styles.historyChip, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]}
               onPress={() => { setQuery(searchTerm); handleSearch(searchTerm); }}
             >
-              <Ionicons name="time-outline" size={14} color="#888" />
-              <Text style={styles.historyChipText}>{searchTerm}</Text>
+              <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+              <Text style={[styles.historyChipText, { color: colors.textSecondary }]}>{searchTerm}</Text>
             </TouchableOpacity>
+
             );
           })}
         </View>
@@ -163,38 +175,43 @@ export default function SearchScreen({ navigation }) {
 
       {/* Results */}
       {loading ? (
-        <View style={styles.center}><ActivityIndicator size="large" color="#1e3a5f" /></View>
+        <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
       ) : hasSearched ? (
+
         <FlatList
           data={results}
           keyExtractor={(b) => String(b._id)}
           renderItem={renderResult}
           contentContainerStyle={styles.resultsList}
           ListHeaderComponent={
-            <Text style={styles.resultCount}>
+            <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
               {results.length} {isAiMode ? 'AI suggestions' : `results for "${query}"`}
             </Text>
           }
+
           ListEmptyComponent={
             <View style={styles.emptyBox}>
-              <Ionicons name="search-outline" size={50} color="#ccc" />
-              <Text style={styles.emptyTitle}>No matching books</Text>
-              <Text style={styles.emptyDesc}>Try different keywords or filters</Text>
+              <Ionicons name="search-outline" size={50} color={colors.border} />
+              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No matching books</Text>
+              <Text style={[styles.emptyDesc, { color: colors.textSecondary, opacity: 0.7 }]}>Try different keywords or filters</Text>
             </View>
           }
+
         />
       ) : (
         <View style={styles.promptBox}>
-          <Ionicons name="search-circle-outline" size={64} color="#ddd" />
-          <Text style={styles.promptText}>Search for books by title, author, or genre</Text>
+          <Ionicons name="search-circle-outline" size={64} color={colors.border} />
+          <Text style={[styles.promptText, { color: colors.textSecondary }]}>Search for books by title, author, or genre</Text>
         </View>
       )}
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f7fb' },
+  container: { flex: 1 },
+
   header: { backgroundColor: '#1e3a5f', paddingTop: 50, paddingBottom: 16, paddingHorizontal: 16 },
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
   searchBox: { margin: 12, backgroundColor: '#fff', borderRadius: 14, padding: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
@@ -206,11 +223,12 @@ const styles = StyleSheet.create({
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   historyTitle: { fontSize: 14, fontWeight: '700', color: '#1e3a5f' },
   clearText: { fontSize: 13, color: '#e53e3e', fontWeight: '600' },
-  historyChip: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 6, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
-  historyChipText: { fontSize: 13, color: '#555' },
+  historyChip: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 6, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
+  historyChipText: { fontSize: 13 },
   resultsList: { paddingHorizontal: 12, paddingBottom: 24 },
-  resultCount: { fontSize: 13, color: '#888', marginBottom: 12, marginTop: 4 },
-  resultCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+  resultCount: { fontSize: 13, marginBottom: 12, marginTop: 4 },
+  resultCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 12, marginBottom: 10, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
+
   resultCover: { width: 50, height: 70, borderRadius: 6, overflow: 'hidden', marginRight: 12 },
   coverImg: { width: 50, height: 70 },
   coverPlaceholder: { width: 50, height: 70, backgroundColor: '#1e3a5f', justifyContent: 'center', alignItems: 'center' },

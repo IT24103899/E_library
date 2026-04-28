@@ -1,14 +1,22 @@
+import 'react-native-gesture-handler';
 import React from 'react';
-import { StatusBar } from 'react-native';
+
+import { StatusBar, View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialIcons, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFonts } from 'expo-font';
+import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
-// Note: We'll let the default splash screen handle auto-hiding for reliability
-// SplashScreen.preventAutoHideAsync();
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { useFonts } from 'expo-font';
+
+// Prevent the splash screen from auto-hiding before asset loading is complete
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* reloading the app might cause this to error, so we catch it */
+});
+
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 
@@ -28,6 +36,9 @@ import ActivityScreen from './src/screens/activity/ActivityScreen';
 
 // Member 4 — Feedback
 import FeedbackScreen from './src/screens/feedback/FeedbackScreen';
+
+// Member 1 — Payment
+import PaymentScreen from './src/screens/profile/PaymentScreen';
 
 // Member 5 — Books
 import BooksScreen from './src/screens/books/BooksScreen';
@@ -76,9 +87,31 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#1e3a5f',
-        tabBarInactiveTintColor: '#aaa',
-        tabBarStyle: { borderTopColor: '#f0f0f0', elevation: 8 },
+        tabBarActiveTintColor: '#4f46e5',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: { 
+          height: 85, 
+          paddingBottom: 25, 
+          paddingTop: 12,
+          backgroundColor: '#ffffff',
+          borderTopWidth: 0,
+          elevation: 25,
+          shadowColor: '#4f46e5',
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '800',
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
+        }
       }}
     >
       <Tab.Screen
@@ -121,9 +154,31 @@ function AdminTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#1e3a5f',
-        tabBarInactiveTintColor: '#aaa',
-        tabBarStyle: { borderTopColor: '#f0f0f0', elevation: 8 },
+        tabBarActiveTintColor: '#4f46e5',
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: { 
+          height: 85, 
+          paddingBottom: 25, 
+          paddingTop: 12,
+          backgroundColor: '#ffffff',
+          borderTopWidth: 0,
+          elevation: 25,
+          shadowColor: '#4f46e5',
+          shadowOpacity: 0.15,
+          shadowRadius: 20,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '800',
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: 0,
+        }
       }}
     >
       <Tab.Screen
@@ -204,6 +259,7 @@ function ProfileNavigator() {
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="ActivityDetail" component={ActivityScreen} />
       <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ title: 'Feedback', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
+      <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Premium Subscription', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
     </Stack.Navigator>
   );
 }
@@ -228,40 +284,86 @@ function AdminBooksNavigator() {
 
 // ─── Root Navigator (auth guard) ───────────────────────────────────────────────
 function RootNavigator() {
-  const { user, loading } = useAuth();
-
-  if (loading) return null; // Splash / loading state
-
-  if (!user) return <AuthStack />;
-
-  return user.role === 'admin' ? <AdminTabs /> : <MainTabs />;
-}
-
-// ─── App Root ──────────────────────────────────────────────────────────────────
-export default function App() {
+  const { user, loading: authLoading } = useAuth();
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
     ...MaterialIcons.font,
     ...FontAwesome.font,
     ...MaterialCommunityIcons.font,
   });
+  
+  const loading = authLoading || !fontsLoaded;
 
-  // Automatically hide splash screen when ready
+  // Hide splash screen as soon as we mount if it hasn't been hidden yet
   React.useEffect(() => {
-    async function hide() {
-      if (fontsLoaded) {
-        await SplashScreen.hideAsync();
-      }
+    if (!loading) {
+      SplashScreen.hideAsync().catch(() => {});
     }
-    hide();
-  }, [fontsLoaded]);
+  }, [loading]);
 
+  // If we are still checking local storage for a token or loading fonts, 
+  // we show a simple loading view instead of sticking on the splash screen
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+      </View>
+    );
+  }
+
+  if (!user) return <AuthStack />;
+
+  return user.role === 'admin' ? <AdminTabs /> : <MainTabs />;
+}
+
+
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+// ─── App Root ──────────────────────────────────────────────────────────────────
+export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar barStyle="light-content" backgroundColor="#1e3a5f" />
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
+
+function AppContent() {
+  const { colors, dark } = useTheme();
+  
+  return (
+    <NavigationContainer theme={dark ? DarkNavTheme : DefaultNavTheme}>
+      <StatusBar barStyle="light-content" backgroundColor="#1e3a5f" />
+      <RootNavigator />
+    </NavigationContainer>
+  );
+}
+
+const DefaultNavTheme = {
+  dark: false,
+  colors: {
+    primary: '#4f46e5',
+    background: '#f8fafc',
+    card: '#ffffff',
+    text: '#0f172a',
+    border: '#e2e8f0',
+    notification: '#ef4444',
+  },
+};
+
+const DarkNavTheme = {
+  dark: true,
+  colors: {
+    primary: '#818cf8',
+    background: '#0f172a',
+    card: '#1e293b',
+    text: '#f8fafc',
+    border: '#334155',
+    notification: '#f87171',
+  },
+};
+

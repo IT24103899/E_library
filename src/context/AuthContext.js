@@ -12,6 +12,11 @@ export const AuthProvider = ({ children }) => {
   // Restore session on app start
   useEffect(() => {
     const restore = async () => {
+      // Force loading to false after 3 seconds no matter what
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 3000);
+
       try {
         const storedToken = await AsyncStorage.getItem('token');
         const storedUser = await AsyncStorage.getItem('user');
@@ -19,8 +24,12 @@ export const AuthProvider = ({ children }) => {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
         }
-      } catch (_) {}
-      setLoading(false);
+      } catch (_) {
+        console.error("Auth restoration error:", _);
+      } finally {
+        clearTimeout(timer);
+        setLoading(false);
+      }
     };
     restore();
   }, []);

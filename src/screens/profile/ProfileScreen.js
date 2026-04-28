@@ -9,11 +9,15 @@ import { API_BASE_URL } from '../../config/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useTheme } from '../../context/ThemeContext';
+
 
 const { width } = Dimensions.get('window');
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout, refreshUser } = useAuth();
+  const { colors, dark } = useTheme();
+
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(user?.name || '');
   const [savingName, setSavingName] = useState(false);
@@ -141,10 +145,11 @@ export default function ProfileScreen({ navigation }) {
     : 'Unknown';
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={['#1e1b4b', '#4338ca']} style={styles.headerBackground}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={dark ? ['#020617', '#1e1b4b'] : ['#1e1b4b', '#4338ca']} style={styles.headerBackground}>
         <View style={styles.headerAccent} />
       </LinearGradient>
+
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Avatar Area */}
@@ -153,7 +158,7 @@ export default function ProfileScreen({ navigation }) {
             onPress={handlePickImage} 
             activeOpacity={0.9} 
             disabled={uploading}
-            style={styles.avatarContainer}
+            style={[styles.avatarContainer, { backgroundColor: colors.surface, borderColor: colors.surface }]}
           >
             {profileImageUrl && !imgError ? (
               <Image 
@@ -162,7 +167,7 @@ export default function ProfileScreen({ navigation }) {
                 onError={() => setImgError(true)}
               />
             ) : (
-              <LinearGradient colors={['#4f46e5', '#6366f1']} style={styles.avatarPlaceholder}>
+              <LinearGradient colors={dark ? ['#312e81', '#4338ca'] : ['#4f46e5', '#6366f1']} style={styles.avatarPlaceholder}>
                 <Text style={styles.avatarLetter}>{(user?.name || 'U').charAt(0).toUpperCase()}</Text>
               </LinearGradient>
             )}
@@ -174,81 +179,87 @@ export default function ProfileScreen({ navigation }) {
               )}
             </View>
           </TouchableOpacity>
-          <Text style={styles.userName}>{user?.name}</Text>
-          <View style={styles.roleTag}>
-             <Ionicons name={user?.role === 'admin' ? "shield-checkmark" : "book"} size={14} color="#4f46e5" />
-             <Text style={styles.roleText}>{user?.role === 'admin' ? 'Administrator' : 'Premium Reader'}</Text>
+          <Text style={[styles.userName, { color: colors.text }]}>{user?.name}</Text>
+          <View style={[styles.roleTag, { backgroundColor: dark ? 'rgba(129, 140, 248, 0.1)' : '#eef2ff' }]}>
+             <Ionicons name={user?.role === 'admin' ? "shield-checkmark" : (user?.isPremium ? "star" : "book")} size={14} color={colors.primary} />
+             <Text style={[styles.roleText, { color: colors.primary }]}>{user?.role === 'admin' ? 'Administrator' : (user?.isPremium ? 'Premium Reader' : 'Basic Reader')}</Text>
           </View>
+
         </View>
 
         {/* Profile Details Card */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]}>
           <View style={styles.cardHeader}>
-            <Ionicons name="person-circle-outline" size={20} color="#4338ca" />
-            <Text style={styles.cardTitle}>Account Details</Text>
+            <Ionicons name="person-circle-outline" size={20} color={colors.primary} />
+            <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Account Details</Text>
           </View>
+
 
           <View style={styles.infoRow}>
             <View>
               <Text style={styles.label}>Display Name</Text>
               {editingName ? (
                 <TextInput 
-                  style={styles.nameInput} 
+                  style={[styles.nameInput, { color: colors.primary, borderBottomColor: colors.primary }]} 
                   value={newName} 
                   onChangeText={setNewName} 
                   autoFocus
                 />
               ) : (
-                <Text style={styles.value}>{user?.name}</Text>
+                <Text style={[styles.value, { color: colors.text }]}>{user?.name}</Text>
               )}
             </View>
+
             <TouchableOpacity 
               onPress={() => editingName ? handleSaveName() : setEditingName(true)}
-              style={editingName ? styles.saveBadge : styles.editBadgeSmall}
+              style={editingName ? [styles.saveBadge, { backgroundColor: colors.primary }] : [styles.editBadgeSmall, { borderColor: colors.border }]}
             >
               {savingName ? (
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
-                <Text style={editingName ? styles.saveBadgeText : styles.editBadgeText}>
+                <Text style={editingName ? styles.saveBadgeText : [styles.editBadgeText, { color: colors.textSecondary }]}>
                   {editingName ? 'Save' : 'Edit'}
                 </Text>
               )}
             </TouchableOpacity>
+
           </View>
 
-          <View style={styles.divider} />
-
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+ 
           <View style={styles.infoRow}>
             <View>
               <Text style={styles.label}>Email Address</Text>
-              <Text style={styles.value}>{user?.email}</Text>
+              <Text style={[styles.value, { color: colors.text }]}>{user?.email}</Text>
             </View>
-            <Ionicons name="mail-outline" size={18} color="#94a3b8" />
+            <Ionicons name="mail-outline" size={18} color={colors.textSecondary} />
           </View>
 
-          <View style={styles.divider} />
 
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+ 
           <View style={styles.infoRow}>
             <View>
               <Text style={styles.label}>Joined Since</Text>
-              <Text style={styles.value}>{joinDate}</Text>
+              <Text style={[styles.value, { color: colors.text }]}>{joinDate}</Text>
             </View>
-            <Ionicons name="calendar-outline" size={18} color="#94a3b8" />
+            <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
           </View>
         </View>
 
         {/* Password Card */}
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]}>
             <View style={styles.cardHeader}>
-                <Ionicons name="lock-closed-outline" size={20} color="#4338ca" />
-                <Text style={styles.cardTitle}>Security</Text>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.primary} />
+                <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Security</Text>
             </View>
             
             <View style={styles.inputWrap}>
-                <Text style={styles.fieldLabel}>Current Password</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>Current Password</Text>
                 <TextInput
-                    style={[styles.input, pwdErrors.current && styles.inputError]}
+                    style={[styles.input, { backgroundColor: dark ? colors.background : '#f8fafc', color: colors.text, borderColor: colors.border }, pwdErrors.current && styles.inputError]}
                     placeholder="••••••••"
+                    placeholderTextColor={colors.textSecondary}
                     value={currentPassword}
                     onChangeText={setCurrentPassword}
                     secureTextEntry
@@ -256,76 +267,95 @@ export default function ProfileScreen({ navigation }) {
                 {pwdErrors.current && <Text style={styles.errorMsg}>{pwdErrors.current}</Text>}
             </View>
 
+
             <View style={styles.inputWrap}>
-                <Text style={styles.fieldLabel}>New Password</Text>
+                <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>New Password</Text>
                 <TextInput
-                    style={[styles.input, pwdErrors.new && styles.inputError]}
+                    style={[styles.input, { backgroundColor: dark ? colors.background : '#f8fafc', color: colors.text, borderColor: colors.border }, pwdErrors.new && styles.inputError]}
                     placeholder="min. 6 characters"
+                    placeholderTextColor={colors.textSecondary}
                     value={newPassword}
                     onChangeText={setNewPassword}
                     secureTextEntry
                 />
                 {pwdErrors.new && <Text style={styles.errorMsg}>{pwdErrors.new}</Text>}
             </View>
-
-            <TouchableOpacity style={styles.primaryBtn} onPress={handleChangePassword} disabled={savingPwd}>
+ 
+            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary, shadowColor: colors.primary }]} onPress={handleChangePassword} disabled={savingPwd}>
                 {savingPwd ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Update Password</Text>}
             </TouchableOpacity>
         </View>
 
         {/* Actions */}
           <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-            <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-            <Text style={styles.logoutBtnText}>Sign Out from Account</Text>
+            <Ionicons name="log-out-outline" size={24} color={colors.error} />
+            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Sign Out from Account</Text>
           </TouchableOpacity>
 
-          {/* Support Section — Only for regular users, Admins have their own management tab */}
+
+          {/* Extra Options — Only for regular users, Admins have their own management tab */}
           {user?.role !== 'admin' && (
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]}>
                <View style={styles.cardHeader}>
-                 <Ionicons name="help-buoy-outline" size={20} color="#4338ca" />
-                 <Text style={styles.cardTitle}>Support & Feedback</Text>
+                 <Ionicons name="options-outline" size={20} color={colors.primary} />
+                 <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>More Options</Text>
                </View>
                
+               <TouchableOpacity 
+                 style={styles.menuItem} 
+                 onPress={() => navigation.navigate('Payment')}
+               >
+                 <View style={styles.menuItemLeft}>
+                   <Ionicons name="star-outline" size={22} color={colors.text} />
+                   <Text style={[styles.menuItemText, { color: colors.text }]}>Premium Subscription</Text>
+                 </View>
+                 <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+               </TouchableOpacity>
+               
+               <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
                <TouchableOpacity 
                  style={styles.menuItem} 
                  onPress={() => navigation.navigate('Feedback')}
                >
                  <View style={styles.menuItemLeft}>
-                   <Ionicons name="chatbubble-ellipses-outline" size={22} color="#475569" />
-                   <Text style={styles.menuItemText}>Send Feedback</Text>
+                   <Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.text} />
+                   <Text style={[styles.menuItemText, { color: colors.text }]}>Send Feedback</Text>
                  </View>
-                 <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+                 <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                </TouchableOpacity>
             </View>
           )}
 
+
           {/* DEBUG INFO - Helps solve connection issues */}
-          <View style={styles.debugCard}>
+          <View style={[styles.debugCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <View style={styles.cardHeader}>
-              <Ionicons name="bug-outline" size={20} color="#94a3b8" />
-              <Text style={styles.cardTitle}>Diagnostic Info</Text>
+              <Ionicons name="bug-outline" size={20} color={colors.textSecondary} />
+              <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Diagnostic Info</Text>
             </View>
             <View style={styles.debugRow}>
-              <Text style={styles.debugLabel}>Backend URL:</Text>
-              <Text style={styles.debugValue}>{API_BASE_URL}</Text>
+              <Text style={[styles.debugLabel, { color: colors.textSecondary }]}>Backend URL:</Text>
+              <Text style={[styles.debugValue, { color: colors.text }]}>{API_BASE_URL}</Text>
             </View>
             <View style={styles.debugRow}>
-              <Text style={styles.debugLabel}>Platform:</Text>
-              <Text style={styles.debugValue}>{Platform.OS} {Platform.Version}</Text>
+              <Text style={[styles.debugLabel, { color: colors.textSecondary }]}>Platform:</Text>
+              <Text style={[styles.debugValue, { color: colors.text }]}>{Platform.OS} {Platform.Version}</Text>
             </View>
-            <Text style={styles.debugNote}>
+            <Text style={[styles.debugNote, { color: colors.textSecondary }]}>
               If the URL above is "localhost" and you are on a real phone, 
               the app won't be able to connect!
             </Text>
           </View>
+
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1 },
+
   headerBackground: { height: 180, position: 'absolute', top: 0, left: 0, right: 0 },
   headerAccent: { position: 'absolute', bottom: -50, right: -20, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.05)' },
   scrollContent: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 40 },
@@ -349,9 +379,10 @@ const styles = StyleSheet.create({
   roleTag: { flexDirection: 'row', alignItems: 'center', marginTop: 6, backgroundColor: '#eef2ff', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
   roleText: { marginLeft: 6, fontSize: 13, color: '#4338ca', fontWeight: '700' },
   
-  card: { backgroundColor: '#fff', borderRadius: 24, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 4 },
+  card: { borderRadius: 24, padding: 20, marginBottom: 20, shadowOpacity: 0.05, shadowRadius: 15, elevation: 4 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  cardTitle: { fontSize: 16, fontWeight: '800', color: '#475569', marginLeft: 10 },
+  cardTitle: { fontSize: 16, fontWeight: '800', marginLeft: 10 },
+
   
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   label: { fontSize: 12, color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase', marginBottom: 4 },
