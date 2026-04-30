@@ -21,12 +21,7 @@ if sys.platform == 'win32':
 app = Flask(__name__)
 CORS(app)
 
-# Hook to load models before first request
-@app.before_request
-def before_request():
-    if request.path == '/api/mobile/health':
-        return
-    initialize_models()
+# No before_request hook to avoid OOM on arbitrary paths
 
 import torch
 # CRITICAL: Limit memory usage for Render Free Tier
@@ -138,6 +133,10 @@ def get_book_details(book_id):
 # ENDPOINTS
 # ============================================
 
+@app.route('/', methods=['GET'])
+def root():
+    return jsonify({"message": "Mobile AI Engine API is running. Visit /api/mobile/health for status."}), 200
+
 # 0. Health Check
 @app.route('/api/mobile/health', methods=['GET'])
 def health():
@@ -159,6 +158,7 @@ def health():
 # 1. Recommendation by IDEA (Semantic Search)
 @app.route('/api/mobile/recommend/idea', methods=['POST'])
 def recommend_idea():
+    initialize_models()
     """Find 10 books based on user's natural language idea"""
     data = request.json or {}
     idea = data.get('idea', '').strip()
@@ -212,6 +212,7 @@ def recommend_idea():
 # 2. Reading Velocity: Log Progress
 @app.route('/api/mobile/velocity/log', methods=['POST'])
 def log_velocity():
+    initialize_models()
     data = request.json or {}
     user_id = data.get('userId')
     book_id = data.get('bookId')
@@ -230,6 +231,7 @@ def log_velocity():
 # 3. Reading Velocity: Get Stats
 @app.route('/api/mobile/velocity/stats/<string:user_id>/<string:book_id>', methods=['GET'])
 def get_stats(user_id, book_id):
+    initialize_models()
     stats = velocity_analyzer.calculate_velocity(user_id, book_id)
     if "error" in stats:
         return jsonify({"status": "empty", "message": stats["error"]}), 200
