@@ -24,6 +24,8 @@ CORS(app)
 # Hook to load models before first request
 @app.before_request
 def before_request():
+    if request.path == '/api/mobile/health':
+        return
     initialize_models()
 
 import torch
@@ -147,19 +149,11 @@ def health():
             "models_loaded": False
         }), 500
     
-    if not MODELS_LOADED:
-        return jsonify({
-            "status": "initializing",
-            "service": "Mobile AI Engine",
-            "message": "Models are loading, please try again in a moment",
-            "models_loaded": False
-        }), 503
-    
     return jsonify({
         "status": "active",
         "service": "Mobile AI Engine",
         "models_loaded": MODELS_LOADED,
-        "message": "✓ All systems operational"
+        "message": "✓ Server is running. Models will load on first AI request."
     }), 200
 
 # 1. Recommendation by IDEA (Semantic Search)
