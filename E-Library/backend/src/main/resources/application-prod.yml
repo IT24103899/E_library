@@ -1,0 +1,64 @@
+# ============================================
+# Production Profile - PostgreSQL
+# Use this when hosting on Supabase / Neon / Railway / Render
+#
+# Set these environment variables on your hosting platform:
+#   DATABASE_URL      → your PostgreSQL JDBC URL
+#   DATABASE_USERNAME → your PostgreSQL username
+#   DATABASE_PASSWORD → your PostgreSQL password
+#   JWT_SECRET        → a strong random secret key
+#   MAIL_USERNAME     → your Gmail address
+#   MAIL_PASSWORD     → your Gmail app password
+# ============================================
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5        # keep low on free tier
+      minimum-idle: 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 900000
+
+  jpa:
+    hibernate:
+      ddl-auto: update            # Hibernate will create/update tables automatically
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      expiration: 86400000
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+
+logging:
+  level:
+    root: WARN
+    com.elibrary: INFO

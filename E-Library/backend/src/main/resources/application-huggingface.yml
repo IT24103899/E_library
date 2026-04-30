@@ -1,0 +1,28 @@
+server:
+  port: 7860
+  servlet:
+    context-path: /api
+
+spring:
+  config:
+    activate:
+      on-profile: huggingface
+  
+  datasource:
+    url: jdbc:sqlite:data/elibrary.db
+    driver-class-name: org.sqlite.JDBC
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.community.dialect.SQLiteDialect
+        format_sql: true
+
+# Hugging Face specific settings
+huggingface:
+  enabled: true
+  seeding-enabled: true

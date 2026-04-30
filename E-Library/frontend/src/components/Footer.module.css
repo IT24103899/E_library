@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.footer {
+  @apply bg-slate-900 text-slate-300 py-8;
+}
+
+.footerContainer {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4;
+}
+
+.footerBrand {
+  @apply flex items-center gap-3;
+}
+
+.footerLogo {
+  @apply bg-white text-indigo-800 rounded-lg p-2 shadow-sm;
+}
+
+.footerText {
+  @apply text-sm text-slate-300;
+}
+
+.footerLinks {
+  @apply flex items-center gap-4;
+}
+
+.footerLink {
+  @apply text-sm text-indigo-300 hover:text-white transition;
+}
+
+.footerCopy {
+  @apply text-xs text-slate-400 mt-4 md:mt-0;
+}

@@ -1,0 +1,60 @@
+.adminWrapper {
+  padding: 24px;
+  background: linear-gradient(180deg,#f6f8fb 0%, #ffffff 100%);
+  min-height: calc(100vh - 72px);
+}
+.headerRow {
+  margin-bottom: 18px;
+}
+.title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+}
+.subtitle {
+  color: #6b7280;
+  margin: 0;
+}
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+}
+.cardTitle { color:#9ca3af; font-size:13px; }
+.cardValue { font-size:22px; font-weight:700; margin-top:8px; }
+.quickActions { display:flex; gap:8px; align-items:center; }
+.btnPrimary { background:#6d28d9; color:white; padding:8px 12px; border-radius:8px; border:none; cursor:pointer; }
+.btnOutline { background:transparent; border:1px solid #d1d5db; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.section { margin-top:18px; }
+.tableWrap { overflow-x:auto; }
+.table { width:100%; border-collapse:collapse; }
+.th, .td { padding:10px 12px; text-align:left; }
+.trHeader { background:#f8fafc; }
+.emptyState { padding:28px; text-align:center; color:#6b7280; }
+.actionBtn { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }
+.promoteBtn { background:#10b981; color:white; }
+.deleteBtn { background:#ef4444; color:white; }
+
+/* Dashboard additions */
+.cardIcon { width:36px; height:36px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; margin-right:10px; }
+.recentWrap { display:flex; gap:16px; flex-wrap:wrap; }
+.recentColumn { flex:1 1 280px; }
+.recentList { list-style:none; padding:0; margin:0; }
+.recentItem { display:flex; justify-content:space-between; align-items:center; padding:10px 8px; border-bottom:1px solid #f1f5f9; }
+.recentMeta { display:flex; flex-direction:column; gap:4px; }
+.muted { color:#6b7280; font-size:12px; }
+.sectionTitle { font-size:14px; font-weight:600; margin-bottom:8px; }
+.smallBtnRow { display:flex; gap:8px; align-items:center; }
+.smallBtn { padding:6px 8px; background:#e5e7eb; border-radius:6px; text-decoration:none; color:#111827; }
+
+@media (max-width:640px) {
+  .statsGrid { grid-template-columns: 1fr; }
+  .recentWrap { flex-direction:column; }
+}

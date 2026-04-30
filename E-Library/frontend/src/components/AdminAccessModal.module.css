@@ -1,0 +1,199 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  width: 90%;
+  max-width: 450px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.closeButton {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #0f172a;
+}
+
+.modalHeader {
+  padding: 30px 30px 15px;
+  text-align: center;
+}
+
+.iconContainer {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+}
+
+.modalBody {
+  padding: 0 30px 30px;
+}
+
+.infoText {
+  color: #000000;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.textArea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.textArea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.primaryButton {
+  width: 100%;
+  padding: 12px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.primaryButton:hover {
+  background: #2563eb;
+}
+
+.errorMessage {
+  background: #fef2f2;
+  color: #991b1b;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.successMessage {
+  background: #f0fdf4;
+  color: #166534;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.pendingSection, .approvedSection {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.pendingIcon, .approvedIcon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.pendingSection h3, .approvedSection h3 {
+  margin: 0 0 10px 0;
+  color: #0f172a;
+}
+
+.pendingSection p, .approvedSection p {
+  color: #000000;
+  margin: 0 0 15px 0;
+  font-size: 0.95rem;
+}
+
+.smallText {
+  font-size: 0.85rem !important;
+  font-style: italic;
+}
+
+.codeVerificationBox {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.codeInput {
+  width: 100%;
+  padding: 12px;
+  text-align: center;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-sizing: border-box;
+}
+
+.codeInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+}
+
+.codeVerificationBox .primaryButton {
+  background: #10b981;
+}
+
+.codeVerificationBox .primaryButton:hover {
+  background: #059669;
+}
+
+.rejectedPill {
+  display: inline-block;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+}

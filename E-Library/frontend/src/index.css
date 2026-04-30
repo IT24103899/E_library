@@ -1,0 +1,370 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root.light {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f1f5f9;
+  --accent: #4f46e5;
+  --accent-dim: rgba(79, 70, 229, 0.08);
+  --accent-glow: rgba(79, 70, 229, 0.2);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-dim: #94a3b8;
+  --border: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --gold: #f59e0b;
+  --danger: #ef4444;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+}
+
+:root.dark {
+  --bg-primary: #0a0a0b;
+  --bg-secondary: #121214;
+  --bg-card: #18181b;
+  --bg-hover: #27272a;
+  --accent: #818cf8;
+  --accent-dim: rgba(129, 140, 248, 0.1);
+  --accent-glow: rgba(129, 140, 248, 0.3);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-dim: #475569;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --gold: #fbbf24;
+  --danger: #f87171;
+  --glass-bg: rgba(10, 10, 11, 0.8);
+}
+
+:root.sepia {
+  --bg-primary: #f4eccd;
+  --bg-secondary: #faf4e0;
+  --bg-card: #fdfaf0;
+  --bg-hover: #ebe3bb;
+  --accent: #8b5e3c;
+  --accent-dim: rgba(139, 94, 60, 0.1);
+  --accent-glow: rgba(139, 94, 60, 0.2);
+  --text-primary: #433422;
+  --text-secondary: #5f4b32;
+  --text-dim: #8c7355;
+  --border: #e6dec1;
+  --border-hover: #d9cfa3;
+  --gold: #b45309;
+  --danger: #991b1b;
+  --glass-bg: rgba(244, 236, 205, 0.85);
+}
+
+/* Global Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+  transition: background 0.5s ease, color 0.5s ease;
+  
+  /* Mobile App Specifics */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  overflow-x: hidden;
+}
+
+/* Safe Area Support for Capacitor */
+@media (max-width: 1024px) {
+  body {
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Optional hero background with animated gradient (use via .app-hero on pages that need it) */
+.app-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+/* Light pattern overlay, applied only when .hero-pattern is present */
+.hero-pattern::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,255,255,.02) 40px, rgba(255,255,255,.02) 80px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Tailwind Layer Customizations */
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 transition-all;
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 rounded-lg font-medium transition-all;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-xl shadow-soft p-6 transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply card hover:scale-[1.02] hover:shadow-hard;
+  }
+
+  /* Text Utilities */
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent;
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Input Fields */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply ring-2 ring-indigo-500 ring-offset-2;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-block px-3 py-1 rounded-full text-sm font-semibold;
+  }
+
+  .badge-primary {
+    @apply badge bg-indigo-100 text-indigo-700;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-100 text-yellow-700;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-700;
+  }
+
+  /* Transitions */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Shadows */
+  .shadow-soft {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  .shadow-hard {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  /* Containers */
+  .container-max {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Dividers */
+  .divider {
+    @apply my-6 border-t border-gray-200;
+  }
+
+  /* Grid Layouts */
+  .grid-auto {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+  }
+
+  /* Flex Helpers */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+}
+
+/* Custom Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 20%, rgba(255, 255, 255, 0) 40%);
+  background-size: 1000px 100%;
+}
+
+/* Improve image transitions in cards */
+.book-cover img {
+  transition: transform .35s ease, opacity .35s ease;
+}
+.book-cover img:hover {
+  transform: scale(1.03);
+}
+
+/* Modal backdrop blur for professionalism */
+.modal-backdrop {
+  backdrop-filter: blur(6px) saturate(120%);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Gradient Text Animation */
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Fade In Up Animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Float Animation - smooth vertical floating effect */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 3s ease infinite;
+}
+
+/* Responsive Typography */
+@media (max-width: 640px) {
+  h1 { @apply text-3xl; }
+  h2 { @apply text-2xl; }
+  h3 { @apply text-xl; }
+  h4 { @apply text-lg; }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    @apply bg-white;
+  }
+  
+  .no-print {
+    @apply hidden;
+  }
+}
+
+/* Dark mode body override - only affect the main surface */
+.dark body {
+  background: linear-gradient(180deg, #03040a 0%, #0b0f19 100%);
+  color: #e6eef8;
+}
+
+/* Sepia mode body override - only affect the main surface */
+.sepia body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Base card styling (moved here for clarity) */
+.card {
+  @apply bg-white rounded-xl shadow-soft p-6 transition-all duration-300;
+}
+
+/* Note: we removed the .dark .card and utility overrides so that
+   cards and items remain consistent across themes as requested. */
+
+
+/* Focus Mode Global Overrides */
+.body-focus-mode header {
+  display: none !important;
+}
+
+.body-focus-mode footer {
+  display: none !important;
+}

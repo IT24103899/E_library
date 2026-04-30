@@ -1,0 +1,89 @@
+.themeSwitcherWrapper {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.switcherLabel {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.switcherGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+}
+
+.themeOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-secondary);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.themeOption:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.themeOption.active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.iconCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
+}
+
+.active .iconCircle {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+}
+
+/* Light Mode specific icons */
+:global(.light) .themeOption {
+  background: #f1f5f9;
+}
+:global(.light) .themeOption.active {
+  background: #ecfdf5;
+}
+
+/* Sepia specific */
+:global(.sepia) .themeOption {
+  background: #fdf6e3;
+}
+:global(.sepia) .themeOption.active {
+  background: #fdfbf0;
+  border-color: #b45309;
+  color: #b45309;
+}
+:global(.sepia) .active .iconCircle {
+  background: #b45309;
+}

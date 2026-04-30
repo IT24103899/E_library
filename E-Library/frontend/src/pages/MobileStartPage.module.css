@@ -1,0 +1,184 @@
+.container {
+  min-height: 100vh;
+  background: radial-gradient(circle at top right, #0e152e, #030712 60%);
+  background-color: #030712;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #f8fafc;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Add some dynamic glowing orbs in the background */
+.orb1 {
+  position: absolute;
+  top: -100px;
+  right: -50px;
+  width: 300px;
+  height: 300px;
+  background: #10b981;
+  filter: blur(140px);
+  opacity: 0.25;
+  z-index: 1;
+}
+
+.orb2 {
+  position: absolute;
+  bottom: -100px;
+  left: -50px;
+  width: 250px;
+  height: 250px;
+  background: #3b82f6;
+  filter: blur(120px);
+  opacity: 0.2;
+  z-index: 1;
+}
+
+.glassCard {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.03);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  padding: 2.5rem 1.5rem;
+  z-index: 5;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 0.75rem;
+}
+
+.logoIcon {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4), inset 0 2px 4px rgba(255,255,255,0.3);
+}
+
+.logoText {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.accent {
+  color: #10b981;
+}
+
+.tabs {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
+  padding: 5px;
+  margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.tab {
+  flex: 1;
+  padding: 0.85rem;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.activeTab {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Form Layouts */
+.inputGroup {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0 1.25rem;
+  margin-bottom: 1.25rem;
+  transition: all 0.3s;
+}
+
+.inputGroup:focus-within {
+  border-color: #10b981;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+}
+
+.inputGroup input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 1.1rem 0.75rem;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+}
+
+.inputGroup svg {
+  color: #94a3b8;
+  transition: color 0.3s;
+}
+
+.inputGroup:focus-within svg {
+  color: #10b981;
+}
+
+.btn {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3), inset 0 1px 2px rgba(255,255,255,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 1.5rem;
+}
+
+.btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 5px 10px rgba(16, 185, 129, 0.4);
+}
+
+.errorAlert {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  animation: slideUp 0.3s;
+}

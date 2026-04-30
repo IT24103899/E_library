@@ -1,0 +1,82 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.0)
+
+2026-04-13 22:01:24 - Starting ELibraryApplication v1.0.0 using Java 21.0.9.0.9 with PID 14592 (C:\Users\user\OneDrive - Sri Lanka Institute of Information Technology\Documents\AI\E-Library\backend\target\elibrary-backend-1.0.0.jar started by user in C:\Users\user\OneDrive - Sri Lanka Institute of Information Technology\Documents\AI\E-Library\backend)
+2026-04-13 22:01:24 - Running with Spring Boot v3.3.0, Spring v6.1.8
+2026-04-13 22:01:24 - No active profile set, falling back to 1 default profile: "default"
+2026-04-13 22:01:25 - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-04-13 22:01:25 - Finished Spring Data repository scanning in 50 ms. Found 11 JPA repository interfaces.
+2026-04-13 22:01:26 - Tomcat initialized with port 8080 (http)
+2026-04-13 22:01:26 - Starting service [Tomcat]
+2026-04-13 22:01:26 - Starting Servlet engine: [Apache Tomcat/10.1.24]
+2026-04-13 22:01:26 - Initializing Spring embedded WebApplicationContext
+2026-04-13 22:01:26 - Root WebApplicationContext: initialization completed in 1769 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2026-04-13 22:01:27 - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-04-13 22:01:27 - HHH000412: Hibernate ORM core version 6.5.2.Final
+2026-04-13 22:01:27 - HHH000026: Second-level cache disabled
+2026-04-13 22:01:27 - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-04-13 22:01:27 - HikariPool-1 - Starting...
+2026-04-13 22:01:27 - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@22ee7fdc
+2026-04-13 22:01:27 - HikariPool-1 - Start completed.
+2026-04-13 22:01:27 - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-04-13 22:01:28 - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-04-13 22:01:28 - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-04-13 22:01:29 - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-04-13 22:01:29 - 
+
+Using generated security password: d46e5c28-e622-461c-93ee-3f1741200741
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-04-13 22:01:29 - Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-04-13 22:01:29 - Exposing 3 endpoints beneath base path '/actuator'
+2026-04-13 22:01:29 - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@6b17aa0b, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@1009a9b4, org.springframework.security.web.context.SecurityContextHolderFilter@24c6a471, org.springframework.security.web.header.HeaderWriterFilter@588b2d7a, org.springframework.web.filter.CorsFilter@3796ca50, org.springframework.security.web.authentication.logout.LogoutFilter@1dec84e3, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@7334dcbe, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@43e7ca6f, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@55154761, org.springframework.security.web.access.ExceptionTranslationFilter@5926f291, org.springframework.security.web.access.intercept.AuthorizationFilter@1b52f723]
+2026-04-13 22:01:30 - Tomcat started on port 8080 (http) with context path '/api'
+2026-04-13 22:01:30 - Started ELibraryApplication in 5.809 seconds (process running for 6.253)
+? E-Library Backend started successfully on port 8080!
+2026-04-13 22:02:27 - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-04-13 22:02:27 - Initializing Servlet 'dispatcherServlet'
+2026-04-13 22:02:27 - Completed initialization in 1 ms
+Saving search history - userId: 10, query: delete test
+Search history saved successfully: 9
+Saving search history - userId: 38, query: Science fiction
+Search history saved successfully: 10
+Saving search history - userId: 38, query: Science fiction
+Search history saved successfully: 11
+Saving search history - userId: 38, query: Science fiction
+Search history saved successfully: 12
+Saving search history - userId: 38, query: Science fiction
+Search history saved successfully: 13
+2026-04-13 22:06:35 - GET /progress - userId=38, bookId=690
+2026-04-13 22:06:35 - GET /progress - userId=38, bookId=688
+2026-04-13 22:06:35 - GET /progress - userId=38, bookId=693
+2026-04-13 22:06:35 - Found progress: currentPage=13, totalPages=280
+2026-04-13 22:06:35 - Found progress: currentPage=1, totalPages=96
+2026-04-13 22:06:35 - Found progress: currentPage=7, totalPages=489
+2026-04-13 22:06:36 - ================================================================================
+2026-04-13 22:06:36 - GET /api/bookshelf/all - Request received with userId=1
+2026-04-13 22:06:36 - Fetching bookshelf items for userId=1
+2026-04-13 22:06:36 - Successfully retrieved 0 items
+2026-04-13 22:06:36 - ================================================================================
+2026-04-13 22:06:36 - ================================================================================
+2026-04-13 22:06:36 - GET /api/bookshelf/all - Request received with userId=1
+2026-04-13 22:06:36 - Fetching bookshelf items for userId=1
+2026-04-13 22:06:36 - ================================================================================
+2026-04-13 22:06:36 - GET /api/bookshelf/all - Request received with userId=38
+2026-04-13 22:06:36 - Fetching bookshelf items for userId=38
+2026-04-13 22:06:36 - Successfully retrieved 0 items
+2026-04-13 22:06:36 - ================================================================================
+2026-04-13 22:06:36 - Successfully retrieved 4 items
+2026-04-13 22:06:36 - ================================================================================
+Saving search history - userId: 38, query: Fantasy adventure
+Search history saved successfully: 14
+Saving search history - userId: 38, query: Fantasy adventure
+Search history saved successfully: 15

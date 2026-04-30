@@ -1,0 +1,50 @@
+/* Tailwind-based custom styles for AddBook page */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.addbook-page {
+  @apply min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12;
+}
+.addbook-container {
+  @apply max-w-2xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+.addbook-card {
+  @apply bg-white rounded-2xl shadow-lg p-8;
+}
+.addbook-title {
+  @apply text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2;
+}
+.addbook-subtitle {
+  @apply text-gray-600 mb-8;
+}
+.addbook-success {
+  @apply mb-6 bg-green-50 border-l-4 border-green-500 rounded-lg p-4 text-green-800 font-medium;
+}
+.addbook-error {
+  @apply mb-6 bg-red-50 border-l-4 border-red-500 rounded-lg p-4 text-red-800;
+}
+.addbook-form {
+  @apply space-y-6;
+}
+.addbook-label {
+  @apply block text-sm font-medium text-gray-700 mb-2;
+}
+.addbook-input {
+  @apply w-full px-4 py-3 border border-black rounded-lg focus:ring-2 focus:ring-black focus:border-transparent;
+}
+.addbook-btn-primary {
+  @apply flex-1 px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition duration-200 flex items-center justify-center gap-2;
+}
+.addbook-btn-secondary {
+  @apply flex-1 px-6 py-3 bg-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-400 transition duration-200;
+}
+.addbook-preview-img {
+  @apply w-24 h-32 object-cover rounded border border-gray-300;
+}
+.addbook-footer {
+  @apply text-sm text-gray-600 mt-8 pt-6 border-t border-gray-200;
+}
+.addbook-required {
+  @apply font-medium;
+}

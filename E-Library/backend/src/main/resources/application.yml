@@ -1,0 +1,88 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+  compression:
+    enabled: true
+    min-response-size: 1024
+  error:
+    include-message: always
+    include-stacktrace: on-param
+    include-exception: false
+
+spring:
+  application:
+    name: elibrary-backend
+    
+  datasource:
+    url: jdbc:mysql://localhost:3306/elibrary_db
+    username: root
+    password: "Bharana@2004"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+    
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          batch_size: 20
+          fetch_size: 50
+        order_inserts: true
+        order_updates: true
+        
+  security:
+    jwt:
+      secret: your-secret-key-change-this-in-production
+      expiration: 86400000  # 24 hours in milliseconds
+      
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: bharanamihijaya@gmail.com
+    password: ayusrefyurgmgtid
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+        debug: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    com.elibrary: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+stripe:
+  secret-key: sk_test_REPLACE_WITH_YOUR_STRIPE_SECRET_KEY
+  publishable-key: pk_test_REPLACE_WITH_YOUR_STRIPE_PUBLISHABLE_KEY
+  webhook-secret: whsec_REPLACE_WITH_YOUR_STRIPE_WEBHOOK_SECRET
+  monthly-price-cents: 499
+  yearly-price-cents: 3999
+  success-url: http://localhost:3000/payment/success
+  cancel-url: http://localhost:3000/payment/cancel
