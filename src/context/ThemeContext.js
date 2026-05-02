@@ -58,17 +58,17 @@ const lightColors = {
 const darkColors = {
   primary: '#818cf8',
   secondary: '#6366f1',
-  background: '#0f172a',
-  surface: '#1e293b',
+  background: '#000000', // Amoled Black
+  surface: '#121212',    // Deep Surface
   text: '#f8fafc',
   textSecondary: '#94a3b8',
-  border: '#334155',
-  card: '#1e293b',
+  border: '#1e293b',
+  card: '#121212',
   accent: '#fbbf24',
   error: '#f87171',
   success: '#34d399',
-  headerGradient: ['#020617', '#1e1b4b', '#312e81'],
-  tabBar: '#0f172a',
+  headerGradient: ['#000000', '#0a0a0a', '#1e1b4b'], // Darker Gradient
+  tabBar: '#000000',
 };
 
 export const useTheme = () => useContext(ThemeContext);

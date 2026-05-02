@@ -3,7 +3,7 @@
     "name": "E-Library",
     "slug": "elibrary-mobile",
     "version": "1.0.0",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
@@ -28,7 +28,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "3d912aae-f990-4419-bcb9-0516920fec3f"
+        "projectId": "5fffa7d8-b792-4679-b65c-223f5b3898a1"
       }
     },
     "plugins": [

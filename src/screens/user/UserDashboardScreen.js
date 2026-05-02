@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getBooks, getReadingStats, getBookshelf, getActivity } from '../../services/api';
 import { API_BASE_URL } from '../../config/api';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInRight, ZoomIn } from 'react-native-reanimated';
+// Removed Reanimated for stability
 import { useTheme } from '../../context/ThemeContext';
 
 
@@ -25,6 +25,7 @@ export default function UserDashboardScreen({ navigation }) {
   const { user } = useAuth();
   const { colors, dark, toggleTheme } = useTheme();
   const [imgError, setImgError] = useState(false);
+  const [profileVersion, setProfileVersion] = useState(Date.now());
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,53 +36,87 @@ export default function UserDashboardScreen({ navigation }) {
 
   const fetchData = useCallback(async () => {
     try {
-      getBooks().then(res => setRecommended((res.data || []).slice(0, 5))).catch(() => {});
-      getReadingStats().then(res => setStats(res.data || null)).catch(() => {});
-      getBookshelf().then(res => {
-        const shelfData = res.data || {};
+      // Fetch in parallel for better performance
+      const [booksRes, statsRes, shelfRes, activityRes] = await Promise.allSettled([
+        getBooks(),
+        getReadingStats(),
+        getBookshelf(),
+        getActivity()
+      ]);
+
+      if (booksRes.status === 'fulfilled') {
+        setRecommended((booksRes.value.data || []).slice(0, 5));
+      }
+      if (statsRes.status === 'fulfilled') {
+        setStats(statsRes.value.data || null);
+      }
+
+      let currentBook = null;
+
+      // 1. Get current book from bookshelf (the "reading" shelf)
+      if (shelfRes.status === 'fulfilled') {
+        const shelfData = shelfRes.value.data || {};
         const readingList = shelfData['reading'] || [];
         if (readingList.length > 0) {
           const item = readingList[0];
-          // bookId is a populated Book object from the backend
           const book = item.bookId || {};
-          setContinueReading({
+          currentBook = {
             _id: book._id || item.bookId,
             title: book.title || '',
             author: book.author || '',
             coverUrl: book.coverUrl || '',
             pdfUrl: book.pdfUrl || '',
-            totalPages: book.totalPages || 0,
-            pageNumber: item.pageNumber || 0,
-          });
+            totalPages: parseInt(book.totalPages) || 0,
+            pageNumber: parseInt(item.pageNumber) || 0,
+          };
         }
-      }).catch(() => {});
-      
-      getActivity().then(res => {
-        const history = res.data || [];
+      }
+
+      // 2. Cross-reference with activity to get the absolute latest progress
+      if (activityRes.status === 'fulfilled') {
+        const history = activityRes.value.data || [];
         if (history.length > 0) {
           const recent = history[0];
-          // Only use activity if it has valid book data
-          if (recent.title && recent.title !== 'Unknown Book') {
-            setContinueReading(prev => prev || {
-              _id: recent.bookId,
+          const recentBookId = recent.bookId?._id || recent.bookId;
+          
+          if (currentBook) {
+            // If the latest activity is the same book, use its (likely newer) progress
+            if (currentBook._id === recentBookId) {
+              currentBook.pageNumber = Math.max(currentBook.pageNumber, parseInt(recent.pageNumber) || 0);
+              if (!currentBook.totalPages) currentBook.totalPages = parseInt(recent.totalPages) || 0;
+            }
+          } else if (recent.title && recent.title !== 'Unknown Book') {
+            // If no bookshelf entry, use activity as fallback
+            currentBook = {
+              _id: recentBookId,
               title: recent.title,
               author: recent.author,
               coverUrl: recent.coverUrl,
-              pageNumber: recent.pageNumber || 0,
-              totalPages: recent.totalPages || 0,
+              pageNumber: parseInt(recent.pageNumber) || 0,
+              totalPages: parseInt(recent.totalPages) || 0,
               pdfUrl: recent.pdfUrl || ''
-            });
+            };
           }
         }
-      }).catch(() => {});
+      }
 
+      setContinueReading(currentBook);
       setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
-    } catch (_) {}
-    setLoading(false);
-    setRefreshing(false);
+    } catch (error) {
+      console.error('[DASHBOARD_FETCH_ERROR]', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []); // continueReading dependency removed to prevent infinite loop on fast updates
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Reset image error and update version when user profile changes
+  useEffect(() => {
+    setImgError(false);
+    setProfileVersion(Date.now());
+  }, [user?.profileImage, user?.name]);
 
   if (loading) {
     return (
@@ -105,9 +140,9 @@ export default function UserDashboardScreen({ navigation }) {
           <View style={styles.headerAccent1} />
           <View style={styles.headerAccent2} />
           
-          <Animated.View entering={FadeInDown.duration(800).delay(100)} style={styles.headerTop}>
+          <View style={styles.headerTop}>
             <View>
-              <Text style={styles.greeting}>Hello, {user?.name?.split(' ')[0] || 'Explorer'} 📚</Text>
+              <Text style={styles.greeting}>Hello, {user?.name ? user.name.split(' ')[0] : 'Explorer'} 📚</Text>
               <Text style={styles.subtext}>Your library is ready for you</Text>
             </View>
             <View style={styles.headerActions}>
@@ -117,7 +152,7 @@ export default function UserDashboardScreen({ navigation }) {
               <TouchableOpacity style={styles.avatarContainer} onPress={() => navigation.navigate('Profile')}>
                 {user?.profileImage && !imgError ? (
                   <Image 
-                    source={{ uri: `${API_BASE_URL.replace('/api/', '').replace(/\/$/, '')}${user.profileImage.startsWith('/') ? '' : '/'}${user.profileImage.replace(/^\//, '')}` }} 
+                    source={{ uri: `${API_BASE_URL.replace('/api/', '').replace(/\/$/, '')}/${user.profileImage.replace(/^\//, '')}?v=${profileVersion}` }} 
                     style={styles.avatarImage} 
                     onError={() => setImgError(true)}
                   />
@@ -128,10 +163,10 @@ export default function UserDashboardScreen({ navigation }) {
                 )}
               </TouchableOpacity>
             </View>
-          </Animated.View>
+          </View>
 
           {/* Quick Stats Overlay */}
-          <Animated.View entering={ZoomIn.duration(800).delay(300)} style={[styles.actionHub, { backgroundColor: dark ? '#1e293b' : '#ffffff' }]}>
+          <View style={[styles.actionHub, { backgroundColor: dark ? '#1e293b' : '#ffffff' }]}>
               <TouchableOpacity style={styles.actionItem} onPress={() => navigation.navigate('Search')} activeOpacity={0.7}>
                   <View style={[styles.actionIcon, { backgroundColor: '#eef2ff' }]}>
                       <Ionicons name="search" size={24} color="#4f46e5" />
@@ -150,11 +185,11 @@ export default function UserDashboardScreen({ navigation }) {
                   </View>
                   <Text style={[styles.actionLabel, { color: colors.text }]}>New</Text>
               </TouchableOpacity>
-          </Animated.View>
+          </View>
         </LinearGradient>
 
         {/* Quote Section */}
-        <Animated.View entering={FadeInDown.duration(600).delay(300)} style={styles.quoteWrapper}>
+        <View style={styles.quoteWrapper}>
             <View style={[styles.quoteCard, { backgroundColor: colors.surface }]}>
                 <View style={styles.quoteIconBadge}>
                   <Ionicons name="quote" size={20} color="#4f46e5" />
@@ -163,11 +198,11 @@ export default function UserDashboardScreen({ navigation }) {
                 <View style={styles.quoteDivider} />
                 <Text style={[styles.quoteAuthor, { color: colors.primary }]}>{quote.author}</Text>
             </View>
-        </Animated.View>
+        </View>
 
 
         {/* Stats Cluster */}
-        <Animated.View entering={FadeInDown.duration(600).delay(400)} style={styles.statsCluster}>
+        <View style={styles.statsCluster}>
           <View style={[styles.statBox, { backgroundColor: colors.surface }]}>
             <LinearGradient colors={dark ? ['#450a0a', '#7f1d1d'] : ['#fee2e2', '#fecaca']} style={styles.statIconBadge}>
               <Ionicons name="book" size={18} color={dark ? "#f87171" : "#ef4444"} />
@@ -189,11 +224,11 @@ export default function UserDashboardScreen({ navigation }) {
             <Text style={[styles.statVal, { color: colors.text }]}>{stats?.streak || 0}</Text>
             <Text style={[styles.statSub, { color: colors.textSecondary }]}>Days Streak</Text>
           </View>
-        </Animated.View>
+        </View>
 
 
         {/* Continue Reading Section */}
-        <Animated.View entering={FadeInDown.duration(600).delay(500)}>
+        <View>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Continue Reading</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Bookshelf')} style={styles.seeAllBtn}>
@@ -269,10 +304,10 @@ export default function UserDashboardScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           )}
-        </Animated.View>
+        </View>
 
         {/* Modern Horizontal Scroll for Recommended */}
-        <Animated.View entering={FadeInDown.duration(600).delay(600)}>
+        <View>
           <View style={[styles.sectionHeader, { marginTop: 35 }]}>
             <View>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Curated for You</Text>
@@ -283,11 +318,17 @@ export default function UserDashboardScreen({ navigation }) {
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modernHorizontalScroll}>
             {recommended.map((book, index) => (
-              <Animated.View key={book._id} entering={FadeInRight.duration(500).delay(600 + index * 100)}>
+              <View key={book._id}>
                 <TouchableOpacity
                   style={styles.modernBookCard}
                   activeOpacity={0.8}
-                  onPress={() => navigation.navigate('Books', { screen: 'BookDetail', params: { bookId: book._id, book } })}
+                  onPress={() => {
+                    const bid = book._id || book.id;
+                    navigation.navigate('Books', { 
+                      screen: 'BookDetail', 
+                      params: { bookId: bid, book: { ...book, _id: bid } } 
+                    });
+                  }}
                 >
                   <View style={[styles.bookShadow, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#0f172a' }]}>
                       {book.coverUrl ? (
@@ -302,10 +343,10 @@ export default function UserDashboardScreen({ navigation }) {
                   <Text style={[styles.modernAuthor, { color: colors.textSecondary }]} numberOfLines={1}>{book.author}</Text>
                 </TouchableOpacity>
 
-              </Animated.View>
+              </View>
             ))}
           </ScrollView>
-        </Animated.View>
+        </View>
 
       </ScrollView>
     </View>

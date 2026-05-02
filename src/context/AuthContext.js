@@ -67,7 +67,11 @@ export const AuthProvider = ({ children }) => {
       const updated = res.data;
       await AsyncStorage.setItem('user', JSON.stringify(updated));
       setUser(updated);
-    } catch (_) {}
+      return updated;
+    } catch (error) {
+      console.error("Failed to refresh user:", error);
+      throw error;
+    }
   };
 
   return (

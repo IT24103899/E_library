@@ -11,6 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 
 const { width } = Dimensions.get('window');
+const ACCENT = '#FF6B6B';
 const COLORS = ['#FF6B6B', '#4ECDC4', '#FF9F1C', '#1A535C', '#6C5CE7', '#A8E6CF'];
 
 export default function ActivityScreen() {
@@ -61,30 +62,30 @@ export default function ActivityScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
 
       <LinearGradient
-        colors={dark ? ['#7f1d1d', '#450a0a'] : ['#FF6B6B', '#FF8E8E']}
+        colors={dark ? ['#7f1d1d', '#450a0a'] : [ACCENT, '#FF8E8E']}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.headerTitle}>Your Journey 🚀</Text>
             <Text style={styles.headerSubtitle}>Look how far you've come!</Text>
           </View>
           <TouchableOpacity style={styles.profileBadge}>
-             <Ionicons name="person-circle" size={44} color="#fff" />
+            <Ionicons name="person-circle" size={48} color="#fff" style={{ shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 6 }} />
           </TouchableOpacity>
         </View>
       </LinearGradient>
 
       <ScrollView
+        style={{ zIndex: 1 }}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} tintColor={colors.primary} />}
       >
 
-        <View style={[styles.statsRow, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : colors.primary }]}>
+        <View style={[styles.statsRow, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : ACCENT }]}> 
           {[
             { label: 'Books', value: stats?.booksRead || 0, icon: 'library-outline', color: dark ? '#34d399' : '#4ECDC4' },
             { label: 'Pages', value: stats?.pagesRead || 0, icon: 'document-text-outline', color: dark ? '#818cf8' : '#6C5CE7' },
@@ -92,11 +93,10 @@ export default function ActivityScreen() {
             { label: 'Velocity', value: stats?.velocity || 0, icon: 'speedometer-outline', color: dark ? '#fbbf24' : '#FF9F1C' },
           ].map((s, i) => (
             <View key={i} style={styles.statBubble}>
-              <View style={[styles.iconBox, { backgroundColor: s.color + '25' }]}>
-                <Ionicons name={s.icon} size={22} color={s.color} />
+              <View style={[styles.iconBox, { backgroundColor: s.color + '33', borderWidth: 2, borderColor: s.color }]}> 
+                <Ionicons name={s.icon} size={26} color={s.color} />
               </View>
-
-              <Text style={[styles.statVal, { color: colors.text }]}>{s.value}</Text>
+              <Text style={[styles.statVal, { color: s.color }]}>{s.value}</Text>
               <Text style={[styles.statLab, { color: colors.textSecondary }]}>{s.label}</Text>
             </View>
           ))}
@@ -165,9 +165,16 @@ export default function ActivityScreen() {
 
                       {progress > 0 && (
                         <View style={styles.barContainer}>
-                          <View style={[styles.barBg, { backgroundColor: dark ? colors.background : '#F1F5F9' }]}>
-                             <View style={[styles.barFill, { flex: progress / 100, backgroundColor: dotColor }]} />
-                             <View style={[styles.barFill, { flex: (100 - progress) / 100, backgroundColor: 'transparent' }]} />
+                          <View style={[styles.barBg, { backgroundColor: dark ? colors.background : '#F1F5F9', height: 14 }]}> 
+                            <View style={{
+                              width: `${progress}%`,
+                              backgroundColor: dotColor,
+                              height: 14,
+                              borderRadius: 7,
+                              shadowColor: dotColor,
+                              shadowOpacity: 0.3,
+                              shadowRadius: 4,
+                            }} />
                           </View>
                         </View>
                       )}
@@ -191,7 +198,7 @@ const styles = StyleSheet.create({
   header: { 
     paddingTop: 65, paddingBottom: 50, paddingHorizontal: 25,
     borderBottomLeftRadius: 40, borderBottomRightRadius: 40,
-    elevation: 8, shadowColor: '#FF6B6B', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15
+    elevation: 12, shadowColor: ACCENT, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.25, shadowRadius: 20
   },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   headerTitle: { fontSize: 26, fontWeight: '900', color: '#fff', letterSpacing: 0.5 },
@@ -200,15 +207,16 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 40 },
   statsRow: { 
     flexDirection: 'row', justifyContent: 'space-between', 
-    marginTop: -35, marginHorizontal: 20,
-    borderRadius: 25, padding: 20,
-    elevation: 10, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 20
+    marginTop: -30, marginHorizontal: 20,
+    borderRadius: 28, padding: 24,
+    elevation: 20, zIndex: 20,
+    shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.12, shadowRadius: 24
   },
 
-  statBubble: { alignItems: 'center', flex: 1 },
-  iconBox: { width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  statVal: { fontSize: 18, fontWeight: '800', color: '#1A535C' },
-  statLab: { fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', fontWeight: '700', marginTop: 2 },
+  statBubble: { alignItems: 'center', flex: 1, marginHorizontal: 6 },
+  iconBox: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 8, backgroundColor: '#fff' },
+  statVal: { fontSize: 22, fontWeight: '900', marginTop: 2 },
+  statLab: { fontSize: 11, color: '#94A3B8', textTransform: 'uppercase', fontWeight: '700', marginTop: 2, letterSpacing: 1 },
   searchSection: { marginTop: 25, paddingHorizontal: 25 },
   searchContainer: { 
     flexDirection: 'row', alignItems: 'center', 
@@ -225,17 +233,17 @@ const styles = StyleSheet.create({
     position: 'absolute', left: 8, top: 10, bottom: 20, 
     width: 2, backgroundColor: '#E2E8F0', borderRadius: 1 
   },
-  timelineItem: { flexDirection: 'row', marginBottom: 25, alignItems: 'flex-start' },
+  timelineItem: { flexDirection: 'row', marginBottom: 28, alignItems: 'flex-start' },
   dot: { 
-    width: 18, height: 18, borderRadius: 9, 
-    borderWidth: 4, zIndex: 1, marginTop: 4,
-    shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2
+    width: 20, height: 20, borderRadius: 10, 
+    borderWidth: 5, zIndex: 1, marginTop: 4,
+    shadowColor: '#000', shadowOpacity: 0.13, shadowRadius: 6, elevation: 3
   },
   card: { 
-    flex: 1, marginLeft: 20, 
-    borderRadius: 20, padding: 18,
-    borderWidth: 1,
-    elevation: 3, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8
+    flex: 1, marginLeft: 24, 
+    borderRadius: 22, padding: 22,
+    borderWidth: 1.5,
+    elevation: 6, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 14
   },
 
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
@@ -247,9 +255,9 @@ const styles = StyleSheet.create({
   progressRow: { marginBottom: 12 },
   progressDetail: { fontSize: 13, color: '#64748B', fontWeight: '600' },
   percentageText: { color: '#1E293B', fontWeight: '800' },
-  barContainer: { marginTop: 8, marginBottom: 12, height: 8 },
-  barBg: { flex: 1, height: 8, backgroundColor: '#F1F5F9', borderRadius: 4, overflow: 'hidden', flexDirection: 'row' },
-  barFill: { height: '100%', borderRadius: 4 },
+  barContainer: { marginTop: 8, marginBottom: 12, height: 14 },
+  barBg: { flex: 1, height: 14, backgroundColor: '#F1F5F9', borderRadius: 7, overflow: 'hidden', flexDirection: 'row' },
+  barFill: { height: '100%', borderRadius: 7 },
   emptyWrap: { alignItems: 'center', marginTop: 40 },
   emptyMain: { fontSize: 18, fontWeight: '800', color: '#94A3B8', marginTop: 15 },
   emptySub: { fontSize: 14, color: '#CBD5E1', marginTop: 5, textAlign: 'center' }

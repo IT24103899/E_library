@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+// Removed Reanimated for stability
 
 const { width } = Dimensions.get('window');
 
@@ -56,7 +56,7 @@ export default function LoginScreen({ navigation }) {
         <SafeAreaView style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             
-            <Animated.View entering={FadeInDown.duration(800).delay(200)} style={styles.header}>
+            <View style={styles.header}>
               <View style={styles.logoWrapper}>
                 <LinearGradient colors={['#4f46e5', '#a855f7']} style={styles.logoGradient}>
                   <Ionicons name="library" size={50} color="#fff" />
@@ -64,9 +64,9 @@ export default function LoginScreen({ navigation }) {
               </View>
               <Text style={styles.title}>E-Library</Text>
               <Text style={styles.subtitle}>Your Gateway to Infinite Knowledge</Text>
-            </Animated.View>
+            </View>
 
-            <Animated.View entering={FadeInUp.duration(800).delay(400)} style={styles.formContainer}>
+            <View style={styles.formContainer}>
               <View style={styles.glassCard}>
                 <Text style={styles.formTitle}>Welcome Back</Text>
                 
@@ -106,7 +106,7 @@ export default function LoginScreen({ navigation }) {
                   {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
                 </View>
 
-                <TouchableOpacity style={styles.forgotBtn}>
+                <TouchableOpacity style={styles.forgotBtn} onPress={() => navigation.navigate('ForgotPassword')}>
                   <Text style={styles.forgotText}>Forgot Password?</Text>
                 </TouchableOpacity>
 
@@ -130,7 +130,7 @@ export default function LoginScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
               </View>
-            </Animated.View>
+            </View>
 
           </ScrollView>
         </SafeAreaView>

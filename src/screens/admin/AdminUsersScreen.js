@@ -6,12 +6,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getAllUsers, updateUserRole, deleteUser } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const ROLE_COLORS = { admin: '#ef4444', user: '#10b981' };
 
 export default function AdminUsersScreen({ navigation }) {
+  const { colors, dark } = useTheme();
   const [users, setUsers] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -90,39 +92,37 @@ export default function AdminUsersScreen({ navigation }) {
     );
   };
 
-  const renderUser = ({ item, index }) => (
-    <View style={styles.card}>
+  const renderUser = ({ item }) => (
+    <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : colors.primary }]}>
       <View style={styles.cardHeader}>
-        <View style={[styles.avatar, { backgroundColor: (ROLE_COLORS[item.role] || '#64748b') + '15' }]}>
-          <Text style={[styles.avatarText, { color: ROLE_COLORS[item.role] || '#64748b' }]}>
+        <View style={[styles.avatar, { backgroundColor: (ROLE_COLORS[item.role] || colors.textSecondary) + '15' }]}>
+          <Text style={[styles.avatarText, { color: ROLE_COLORS[item.role] || colors.textSecondary }]}>
             {(item.name || '?')[0].toUpperCase()}
           </Text>
         </View>
         
         <View style={styles.userInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>{item.name || 'Unknown User'}</Text>
-            <View style={[styles.badge, { backgroundColor: (ROLE_COLORS[item.role] || '#64748b') + '15' }]}>
-              <Text style={[styles.badgeText, { color: ROLE_COLORS[item.role] || '#64748b' }]}>
+            <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>{item.name || 'Unknown User'}</Text>
+            <View style={[styles.badge, { backgroundColor: (ROLE_COLORS[item.role] || colors.textSecondary) + '15' }]}>
+              <Text style={[styles.badgeText, { color: ROLE_COLORS[item.role] || colors.textSecondary }]}>
                 {(item.role || 'user').toUpperCase()}
               </Text>
             </View>
           </View>
-          <Text style={styles.email} numberOfLines={1}>{item.email}</Text>
+          <Text style={[styles.email, { color: colors.textSecondary }]} numberOfLines={1}>{item.email}</Text>
         </View>
 
         <View style={styles.sideActions}>
           <TouchableOpacity 
-            style={[styles.miniActionBtn, { backgroundColor: '#3b82f610' }]} 
+            style={[styles.miniActionBtn, { backgroundColor: dark ? 'rgba(59, 130, 246, 0.15)' : '#3b82f610' }]} 
             onPress={() => handleChangeRole(item)}
-            title="Change Role"
           >
             <Ionicons name="shield-outline" size={18} color="#3b82f6" />
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.miniActionBtn, { backgroundColor: '#ef444410' }]} 
+            style={[styles.miniActionBtn, { backgroundColor: dark ? 'rgba(239, 68, 68, 0.15)' : '#ef444410' }]} 
             onPress={() => handleDeleteUser(item)}
-            title="Delete User"
           >
             <Ionicons name="trash-outline" size={18} color="#ef4444" />
           </TouchableOpacity>
@@ -132,31 +132,31 @@ export default function AdminUsersScreen({ navigation }) {
   );
 
   if (loading) return (
-    <View style={styles.center}>
-      <ActivityIndicator size="large" color="#1e3a5f" />
-      <Text style={styles.loadingText}>Syncing accounts...</Text>
+    <View style={[styles.center, { backgroundColor: colors.background }]}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Syncing accounts...</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={['#1e3a5f', '#12263f']} style={styles.headerGradient}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={dark ? ['#000000', '#1e293b'] : ['#1e3a5f', '#12263f']} style={styles.headerGradient}>
         <View style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>User Management</Text>
-            <Text style={styles.headerSub}>{users.length} registered members</Text>
+            <Text style={[styles.headerSub, { color: dark ? colors.textSecondary : '#94a3b8' }]}>{users.length} registered members</Text>
           </View>
           <View style={styles.headerIconContainer}>
             <Ionicons name="people" size={32} color="rgba(255,255,255,0.2)" />
           </View>
         </View>
 
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#94a3b8" style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { backgroundColor: dark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.1)' }]}>
+          <Ionicons name="search" size={20} color={dark ? colors.textSecondary : "#94a3b8"} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
-            placeholder="Search by name, email or role..."
-            placeholderTextColor="#94a3b8"
+            style={[styles.searchInput, { color: '#fff' }]}
+            placeholder="Search members..."
+            placeholderTextColor="rgba(255,255,255,0.4)"
             value={search}
             onChangeText={handleSearch}
           />
@@ -171,16 +171,16 @@ export default function AdminUsersScreen({ navigation }) {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={() => { setRefreshing(true); fetchUsers(); }} 
-            tintColor="#1e3a5f"
+            tintColor={colors.primary}
           />
         }
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyBox}>
-            <Ionicons name="people-outline" size={80} color="#cbd5e1" />
-            <Text style={styles.emptyTitle}>No Members Found</Text>
-            <Text style={styles.emptySub}>We couldn't find any users matching your search</Text>
+            <Ionicons name="people-outline" size={80} color={colors.border} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Members Found</Text>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>We couldn't find any users matching your search</Text>
           </View>
         }
       />
@@ -189,31 +189,31 @@ export default function AdminUsersScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' },
-  loadingText: { marginTop: 12, color: '#64748b', fontSize: 15, fontWeight: '500' },
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, fontSize: 15, fontWeight: '500' },
   headerGradient: { paddingTop: 60, paddingBottom: 24, paddingHorizontal: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#fff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 13, color: '#94a3b8', fontWeight: '500' },
+  headerSub: { fontSize: 13, fontWeight: '500' },
   headerIconContainer: { padding: 10 },
-  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, paddingHorizontal: 12, height: 48 },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, paddingHorizontal: 12, height: 48 },
   searchIcon: { marginRight: 10 },
-  searchInput: { flex: 1, color: '#fff', fontSize: 15, fontWeight: '500' },
+  searchInput: { flex: 1, fontSize: 15, fontWeight: '500' },
   listContent: { padding: 16, paddingBottom: 40 },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 12, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 2 },
+  card: { borderRadius: 20, padding: 12, marginBottom: 12, shadowOpacity: 0.05, shadowRadius: 15, elevation: 2 },
   cardHeader: { flexDirection: 'row', alignItems: 'center' },
   avatar: { width: 50, height: 50, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
   avatarText: { fontWeight: '800', fontSize: 20 },
   userInfo: { flex: 1, justifyContent: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  name: { fontSize: 16, fontWeight: '800', color: '#1e293b', flexShrink: 1 },
-  email: { fontSize: 13, color: '#64748b', fontWeight: '500' },
+  name: { fontSize: 16, fontWeight: '800', flexShrink: 1 },
+  email: { fontSize: 13, fontWeight: '500' },
   badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   badgeText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   sideActions: { flexDirection: 'row', gap: 8, paddingLeft: 8 },
   miniActionBtn: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   emptyBox: { alignItems: 'center', justifyContent: 'center', marginTop: 80 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#1e293b', marginTop: 16 },
-  emptySub: { fontSize: 14, color: '#64748b', marginTop: 6, fontWeight: '500', textAlign: 'center', paddingHorizontal: 40 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', marginTop: 16 },
+  emptySub: { fontSize: 14, marginTop: 6, fontWeight: '500', textAlign: 'center', paddingHorizontal: 40 },
 });

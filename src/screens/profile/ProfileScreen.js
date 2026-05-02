@@ -28,6 +28,13 @@ export default function ProfileScreen({ navigation }) {
   const [savingPwd, setSavingPwd] = useState(false);
   const [pwdErrors, setPwdErrors] = useState({});
   const [imgError, setImgError] = useState(false);
+  const [profileVersion, setProfileVersion] = useState(Date.now());
+
+  // Reset error and update version when user image changes
+  React.useEffect(() => {
+    setImgError(false);
+    setProfileVersion(Date.now());
+  }, [user?.profileImage]);
 
   // Construct the full image URL
   const getServerUrl = () => {
@@ -36,7 +43,7 @@ export default function ProfileScreen({ navigation }) {
   };
   
   const profileImageUrl = user?.profileImage 
-    ? `${getServerUrl()}/${user.profileImage.replace(/^\//, '')}` 
+    ? `${getServerUrl()}/${user.profileImage.replace(/^\//, '')}?v=${profileVersion}` 
     : null;
 
   const handlePickImage = async () => {
@@ -286,11 +293,19 @@ export default function ProfileScreen({ navigation }) {
             </TouchableOpacity>
         </View>
 
-        {/* Actions */}
-          <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
-            <Ionicons name="log-out-outline" size={24} color={colors.error} />
-            <Text style={[styles.logoutBtnText, { color: colors.error }]}>Sign Out from Account</Text>
+        {/* Logout Card */}
+        <View style={[styles.card, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleLogout}
+          >
+            <View style={styles.menuItemLeft}>
+              <Ionicons name="log-out-outline" size={22} color={colors.error} />
+              <Text style={[styles.menuItemText, { color: colors.error }]}>Sign Out from Account</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.error} />
           </TouchableOpacity>
+        </View>
 
 
           {/* Extra Options — Only for regular users, Admins have their own management tab */}
@@ -328,25 +343,7 @@ export default function ProfileScreen({ navigation }) {
           )}
 
 
-          {/* DEBUG INFO - Helps solve connection issues */}
-          <View style={[styles.debugCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <View style={styles.cardHeader}>
-              <Ionicons name="bug-outline" size={20} color={colors.textSecondary} />
-              <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>Diagnostic Info</Text>
-            </View>
-            <View style={styles.debugRow}>
-              <Text style={[styles.debugLabel, { color: colors.textSecondary }]}>Backend URL:</Text>
-              <Text style={[styles.debugValue, { color: colors.text }]}>{API_BASE_URL}</Text>
-            </View>
-            <View style={styles.debugRow}>
-              <Text style={[styles.debugLabel, { color: colors.textSecondary }]}>Platform:</Text>
-              <Text style={[styles.debugValue, { color: colors.text }]}>{Platform.OS} {Platform.Version}</Text>
-            </View>
-            <Text style={[styles.debugNote, { color: colors.textSecondary }]}>
-              If the URL above is "localhost" and you are on a real phone, 
-              the app won't be able to connect!
-            </Text>
-          </View>
+
 
       </ScrollView>
     </View>
@@ -409,10 +406,5 @@ const styles = StyleSheet.create({
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 15 },
   logoutBtnText: { marginLeft: 10, fontSize: 16, fontWeight: '700', color: '#ef4444' },
 
-  // Debug Styles
-  debugCard: { backgroundColor: '#f8fafc', borderRadius: 24, padding: 20, marginTop: 40, borderStyle: 'dashed', borderWidth: 2, borderColor: '#e2e8f0' },
-  debugRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  debugLabel: { fontSize: 12, fontWeight: '700', color: '#64748b' },
-  debugValue: { fontSize: 12, color: '#475569', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
-  debugNote: { fontSize: 11, color: '#94a3b8', fontStyle: 'italic', marginTop: 10, textAlign: 'center' }
+
 });

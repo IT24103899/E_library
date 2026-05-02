@@ -10,7 +10,7 @@ import * as Font from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
-import { useFonts } from 'expo-font';
+import { useFonts, Inter_400Regular, Inter_700Bold, Inter_900Black } from '@expo-google-fonts/inter';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -23,6 +23,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 // Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 
 // Member 1 — Profile / User Pages
 import ProfileScreen from './src/screens/profile/ProfileScreen';
@@ -67,9 +68,12 @@ const Tab = createBottomTabNavigator();
 // ─── Auth Stack ────────────────────────────────────────────────────────────────
 function AuthStack() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ 
+      headerShown: false,
+    }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
 }
@@ -83,20 +87,21 @@ function tabIcon(name, focusedName) {
 
 // ─── User Main Tabs ────────────────────────────────────────────────────────────
 function MainTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#4f46e5',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: { 
           height: 85, 
           paddingBottom: 25, 
           paddingTop: 12,
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.card,
           borderTopWidth: 0,
           elevation: 25,
-          shadowColor: '#4f46e5',
+          shadowColor: colors.primary,
           shadowOpacity: 0.15,
           shadowRadius: 20,
           position: 'absolute',
@@ -150,20 +155,21 @@ function MainTabs() {
 
 // ─── Admin Tabs ────────────────────────────────────────────────────────────────
 function AdminTabs() {
+  const { colors } = useTheme();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#4f46e5',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: { 
           height: 85, 
           paddingBottom: 25, 
           paddingTop: 12,
-          backgroundColor: '#ffffff',
+          backgroundColor: colors.card,
           borderTopWidth: 0,
           elevation: 25,
-          shadowColor: '#4f46e5',
+          shadowColor: colors.primary,
           shadowOpacity: 0.15,
           shadowRadius: 20,
           position: 'absolute',
@@ -222,12 +228,10 @@ function BooksNavigator() {
         options={{ 
           title: 'Reader', 
           headerShown: true, 
-          headerStyle: { backgroundColor: '#1e3a5f' }, 
-          headerTintColor: '#fff',
         }} 
       />
-      <Stack.Screen name="AddBook" component={AddBookScreen} options={{ title: 'Add Book', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
-      <Stack.Screen name="EditBook" component={EditBookScreen} options={{ title: 'Edit Book', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
+      <Stack.Screen name="AddBook" component={AddBookScreen} options={{ title: 'Add Book', headerShown: true }} />
+      <Stack.Screen name="EditBook" component={EditBookScreen} options={{ title: 'Edit Book', headerShown: true }} />
     </Stack.Navigator>
   );
 }
@@ -237,8 +241,8 @@ function SearchNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="SearchMain" component={SearchScreen} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
-      <Stack.Screen name="Reader" component={ReaderScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
-      <Stack.Screen name="QRScanner" component={QRScannerScreen} options={{ title: 'Scan QR Code', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
+      <Stack.Screen name="Reader" component={ReaderScreen} options={{ headerShown: true }} />
+      <Stack.Screen name="QRScanner" component={QRScannerScreen} options={{ title: 'Scan QR Code', headerShown: true }} />
     </Stack.Navigator>
   );
 }
@@ -248,7 +252,7 @@ function BookshelfNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BookshelfMain" component={BookshelfScreen} />
       <Stack.Screen name="BookDetail" component={BookDetailScreen} />
-      <Stack.Screen name="Reader" component={ReaderScreen} options={{ headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
+      <Stack.Screen name="Reader" component={ReaderScreen} options={{ headerShown: true }} />
     </Stack.Navigator>
   );
 }
@@ -258,8 +262,8 @@ function ProfileNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="ProfileMain" component={ProfileScreen} />
       <Stack.Screen name="ActivityDetail" component={ActivityScreen} />
-      <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ title: 'Feedback', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
-      <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Premium Subscription', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
+      <Stack.Screen name="Feedback" component={FeedbackScreen} options={{ title: 'Feedback', headerShown: true }} />
+      <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Premium Subscription', headerShown: true }} />
     </Stack.Navigator>
   );
 }
@@ -276,8 +280,8 @@ function AdminBooksNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="AdminBooksMain" component={AdminBooksScreen} />
-      <Stack.Screen name="AddBook" component={AddBookScreen} options={{ title: 'Add Book', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
-      <Stack.Screen name="EditBook" component={EditBookScreen} options={{ title: 'Edit Book', headerShown: true, headerStyle: { backgroundColor: '#1e3a5f' }, headerTintColor: '#fff' }} />
+      <Stack.Screen name="AddBook" component={AddBookScreen} options={{ title: 'Add Book', headerShown: true }} />
+      <Stack.Screen name="EditBook" component={EditBookScreen} options={{ title: 'Edit Book', headerShown: true }} />
     </Stack.Navigator>
   );
 }
@@ -285,36 +289,27 @@ function AdminBooksNavigator() {
 // ─── Root Navigator (auth guard) ───────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading: authLoading } = useAuth();
-  const [fontsLoaded] = useFonts({
-    ...Ionicons.font,
-    ...MaterialIcons.font,
-    ...FontAwesome.font,
-    ...MaterialCommunityIcons.font,
-  });
-  
   const [timedOut, setTimedOut] = React.useState(false);
-  const loading = (authLoading || !fontsLoaded) && !timedOut;
+  const loading = authLoading && !timedOut;
 
-  // Safety timeout: Ensure splash screen hides even if fonts/auth take too long
   React.useEffect(() => {
+    // Force splash screen hide after 3 seconds even if auth is slow
     const timer = setTimeout(() => {
       setTimedOut(true);
       SplashScreen.hideAsync().catch(() => {});
-    }, 5000); // 5 second hard limit
+    }, 3000);
 
-    if (!loading) {
-      clearTimeout(timer);
+    if (!authLoading) {
+      setTimedOut(true);
       SplashScreen.hideAsync().catch(() => {});
     }
-    
-    return () => clearTimeout(timer);
-  }, [loading]);
 
-  // If we are still checking local storage for a token or loading fonts, 
-  // we show a simple loading view instead of sticking on the splash screen
+    return () => clearTimeout(timer);
+  }, [authLoading]);
+
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' }}>
         <ActivityIndicator size="large" color="#4f46e5" />
       </View>
     );
@@ -362,17 +357,29 @@ const DefaultNavTheme = {
     border: '#e2e8f0',
     notification: '#ef4444',
   },
+  fonts: {
+    regular: { fontFamily: 'System', fontWeight: '400' },
+    medium: { fontFamily: 'System', fontWeight: '500' },
+    bold: { fontFamily: 'System', fontWeight: '700' },
+    heavy: { fontFamily: 'System', fontWeight: '900' },
+  },
 };
 
 const DarkNavTheme = {
   dark: true,
   colors: {
     primary: '#818cf8',
-    background: '#0f172a',
-    card: '#1e293b',
+    background: '#000000',
+    card: '#121212',
     text: '#f8fafc',
-    border: '#334155',
+    border: '#1e293b',
     notification: '#f87171',
+  },
+  fonts: {
+    regular: { fontFamily: 'System', fontWeight: '400' },
+    medium: { fontFamily: 'System', fontWeight: '500' },
+    bold: { fontFamily: 'System', fontWeight: '700' },
+    heavy: { fontFamily: 'System', fontWeight: '900' },
   },
 };
 
