@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
-  Dimensions
+  Dimensions, Linking
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -37,8 +37,14 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
     try {
       await register(name.trim(), email.trim(), password);
-      Alert.alert('Account Created!', 'Please login to continue.');
-      navigation.navigate('Login');
+      Alert.alert(
+        'Account Created! 🎉', 
+        `Welcome to E-Library! A welcome email has been sent to ${email.trim()}. Please login to continue.`,
+        [
+          { text: 'Open Email', onPress: () => Linking.openURL('mailto:') },
+          { text: 'Login', onPress: () => navigation.navigate('Login') }
+        ]
+      );
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Registration failed.';
       Alert.alert('Registration Failed', msg);

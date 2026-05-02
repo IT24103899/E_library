@@ -4,13 +4,13 @@ import { API_BASE_URL, PYTHON_API_URL } from '../config/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // Increased to 60s for Render cold start
   headers: { 'Content-Type': 'application/json' },
 });
 
 const pythonApi = axios.create({
   baseURL: PYTHON_API_URL,
-  timeout: 30000, // AI models can be slow
+  timeout: 120000, // 120s for AI wake up
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -34,6 +34,12 @@ export const register = (name, email, password) =>
 
 export const login = (email, password) =>
   api.post('auth/login', { email, password });
+
+export const forgotPassword = (email) =>
+  api.post('auth/forgot-password', { email });
+
+export const resetPassword = (email, token, newPassword) =>
+  api.post('auth/reset-password', { email, token, newPassword });
 
 export const getProfile = () => api.get('auth/profile');
 

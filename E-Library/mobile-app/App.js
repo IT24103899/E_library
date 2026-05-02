@@ -23,6 +23,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 // Auth screens
 import LoginScreen from './src/screens/auth/LoginScreen';
 import RegisterScreen from './src/screens/auth/RegisterScreen';
+import ForgotPasswordScreen from './src/screens/auth/ForgotPasswordScreen';
 
 // Member 1 — Profile / User Pages
 import ProfileScreen from './src/screens/profile/ProfileScreen';
@@ -72,6 +73,7 @@ function AuthStack() {
     }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
     </Stack.Navigator>
   );
 }
@@ -287,40 +289,27 @@ function AdminBooksNavigator() {
 // ─── Root Navigator (auth guard) ───────────────────────────────────────────────
 function RootNavigator() {
   const { user, loading: authLoading } = useAuth();
-  const [fontsLoaded] = useFonts({
-    'Inter-Regular': Inter_400Regular,
-    'Inter-Bold': Inter_700Bold,
-    'Inter-Black': Inter_900Black,
-    ...Ionicons.font,
-    ...MaterialIcons.font,
-    ...FontAwesome.font,
-    ...MaterialCommunityIcons.font,
-  });
-  
   const [timedOut, setTimedOut] = React.useState(false);
-  const loading = (authLoading || !fontsLoaded) && !timedOut;
+  const loading = authLoading && !timedOut;
 
-  // Safety timeout: Ensure splash screen hides even if fonts/auth take too long
   React.useEffect(() => {
-    // Hide splash screen IMMEDIATELY for stability
-    SplashScreen.hideAsync().catch(() => {});
-    
+    // Force splash screen hide after 3 seconds even if auth is slow
     const timer = setTimeout(() => {
       setTimedOut(true);
-    }, 3000); // Reduce hard limit to 3 seconds
+      SplashScreen.hideAsync().catch(() => {});
+    }, 3000);
 
-    if (!loading) {
-      clearTimeout(timer);
+    if (!authLoading) {
+      setTimedOut(true);
+      SplashScreen.hideAsync().catch(() => {});
     }
-    
-    return () => clearTimeout(timer);
-  }, [loading]);
 
-  // If we are still checking local storage for a token or loading fonts, 
-  // we show a simple loading view instead of sticking on the splash screen
+    return () => clearTimeout(timer);
+  }, [authLoading]);
+
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f8fafc' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' }}>
         <ActivityIndicator size="large" color="#4f46e5" />
       </View>
     );
@@ -380,10 +369,10 @@ const DarkNavTheme = {
   dark: true,
   colors: {
     primary: '#818cf8',
-    background: '#0f172a',
-    card: '#1e293b',
+    background: '#000000',
+    card: '#121212',
     text: '#f8fafc',
-    border: '#334155',
+    border: '#1e293b',
     notification: '#f87171',
   },
   fonts: {

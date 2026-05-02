@@ -276,7 +276,8 @@ export default function ReaderScreen({ route, navigation }) {
             } catch (e) {
               console.log('Error logging progress/velocity:', e);
             }
-            navigation.navigate('Books', { screen: 'BooksList' });
+            // Redirect to User Dashboard (Home tab)
+            navigation.navigate('Home');
           }}
         >
           <Ionicons name="chevron-back" size={20} color="#fff" />

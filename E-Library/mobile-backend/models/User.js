@@ -22,7 +22,9 @@ const userSchema = new mongoose.Schema({
   },
   profileImage: { type: String, default: '' },
   legacyId: { type: Number, default: null },
-  isPremium: { type: Boolean, default: false }
+  isPremium: { type: Boolean, default: false },
+  resetPasswordToken: { type: String, default: null },
+  resetPasswordExpires: { type: Date, default: null }
 }, { timestamps: true, strict: false });
 
 // Hash the password securely before saving to the database

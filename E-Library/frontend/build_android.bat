@@ -6,7 +6,7 @@ echo.
 
 REM Set environment for Android build
 set NODE_ENV=production
-set REACT_APP_API_BASE_URL=http://10.0.2.2:4000/api
+set REACT_APP_API_BASE_URL=https://mobile-backend-new.onrender.com/api
 
 echo [1/4] Installing dependencies...
 call npm install
@@ -32,9 +32,9 @@ if errorlevel 1 (
 )
 
 echo.
-echo [4/4] Building Android app...
+echo [4/4] Building Android APK (app-debug.apk)...
 cd android
-call gradlew.bat build
+call gradlew.bat assembleDebug
 if errorlevel 1 (
     echo ERROR: Android build failed
     cd ..
@@ -48,8 +48,7 @@ echo Build completed successfully!
 echo ========================================
 echo.
 echo Next steps:
-echo 1. Open Android Studio
-echo 2. Open the 'android' folder as a project
-echo 3. Start Android Emulator (AVD Manager)
-echo 4. Click Run or press Shift+F10
+echo 1. Your APK is ready at: android\app\build\outputs\apk\debug\app-debug.apk
+echo 2. Transfer this APK to your phone and install it!
+echo 3. Or use Android Studio to run it on an emulator.
 echo.

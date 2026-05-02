@@ -322,7 +322,13 @@ export default function UserDashboardScreen({ navigation }) {
                 <TouchableOpacity
                   style={styles.modernBookCard}
                   activeOpacity={0.8}
-                  onPress={() => navigation.navigate('Books', { screen: 'BookDetail', params: { bookId: book._id, book } })}
+                  onPress={() => {
+                    const bid = book._id || book.id;
+                    navigation.navigate('Books', { 
+                      screen: 'BookDetail', 
+                      params: { bookId: bid, book: { ...book, _id: bid } } 
+                    });
+                  }}
                 >
                   <View style={[styles.bookShadow, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#0f172a' }]}>
                       {book.coverUrl ? (
