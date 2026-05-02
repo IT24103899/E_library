@@ -1,95 +1,83 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, Image
+  ActivityIndicator, Alert, Image, Dimensions, Animated
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 
+const { width } = Dimensions.get('window');
 
 export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
+  
+  // Search States
   const [query, setQuery] = useState('');
-
   const [authorFilter, setAuthorFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
   const [results, setResults] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  
+  // UI States
+  const [activeTab, setActiveTab] = useState('ai'); // 'ai' or 'advanced'
   const [showFilters, setShowFilters] = useState(false);
-  const [isAiMode, setIsAiMode] = useState(false);
   const [aiIdea, setAiIdea] = useState('');
+  const [searchType, setSearchType] = useState('all');
+  const [sortBy, setSortBy] = useState('relevance');
 
   const loadHistory = useCallback(async () => {
     try {
       const res = await getSearchHistory();
-      setHistory(res.data || []);
+      if (res.data) setHistory(res.data);
     } catch (_) {}
   }, []);
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
-  const handleSearch = async (q = query) => {
-    if (!q.trim()) return;
+  const handleManualSearch = async (q = query) => {
+    const term = q.trim();
+    if (!term) return;
     setLoading(true);
     setHasSearched(true);
-    setIsAiMode(false);
     try {
-      const params = {};
+      const params = { type: searchType, sort: sortBy };
       if (authorFilter.trim()) params.author = authorFilter.trim();
       if (genreFilter.trim()) params.category = genreFilter.trim();
-      const res = await searchBooks(q.trim(), params);
-      setResults(res.data || []);
-      await saveSearchHistory(q.trim());
+      
+      const res = await searchBooks(term, params);
+      setResults(Array.isArray(res.data) ? res.data : []);
+      await saveSearchHistory(term);
       await loadHistory();
     } catch (_) {
-      Alert.alert('Search Error', 'Could not complete search. Please try again.');
+      Alert.alert('Connection Issue', 'Could not reach the library server. Check your internet.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleAiIdeaSearch = async () => {
-    if (!aiIdea.trim()) return;
+  const handleAiSearch = async () => {
+    const idea = aiIdea.trim();
+    if (!idea) return;
     setLoading(true);
     setHasSearched(true);
-    setIsAiMode(true);
     try {
-      const res = await getRecommendationsByIdea(aiIdea.trim());
-      if (res.data && res.data.recommendations) {
-        setResults(res.data.recommendations);
-        // Save the AI idea to search history so the user can find it later
-        await saveSearchHistory(aiIdea.trim());
-        setAiIdea(''); // Clear the input bar as requested
+      const res = await getRecommendationsByIdea(idea);
+      const suggestions = Array.isArray(res.data) ? res.data : (res.data.recommendations || []);
+      setResults(suggestions);
+      
+      if (suggestions.length > 0) {
+        await saveSearchHistory(idea);
+        setAiIdea(''); 
         await loadHistory();
-      } else {
-        setResults([]);
       }
     } catch (_) {
-      Alert.alert('AI Error', 'Could not get AI suggestions. Make sure the AI service is running.');
+      Alert.alert('AI Offline', 'The AI engine is taking a break. Please try manual search or try again in a moment.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
-
-  const handleClearHistory = () => {
-    Alert.alert('Clear History', 'Remove all search history?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear', style: 'destructive', onPress: async () => {
-          try { 
-            await clearSearchHistory(); 
-            setHistory([]); 
-            setResults([]); // Clear results too
-            setHasSearched(false); // Reset search state
-            setQuery(''); // Clear the search bar
-          } catch (err) {
-            console.error('Clear History Error:', err);
-            Alert.alert('Error', 'Could not clear history from database.');
-          }
-        }
-      }
-    ]);
   };
 
   const renderResult = ({ item }) => (
@@ -100,152 +88,231 @@ export default function SearchScreen({ navigation }) {
       <View style={styles.resultCover}>
         {item.coverUrl
           ? <Image source={{ uri: item.coverUrl }} style={styles.coverImg} resizeMode="cover" />
-          : <View style={[styles.coverPlaceholder, { backgroundColor: colors.primary }]}><Ionicons name="book" size={22} color="#fff" /></View>
+          : <View style={[styles.coverPlaceholder, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="book" size={24} color={colors.primary} />
+            </View>
         }
       </View>
       <View style={styles.resultInfo}>
-        <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={2}>{item.title}</Text>
-        <Text style={[styles.resultAuthor, { color: colors.textSecondary }]}>{item.author}</Text>
-        {item.category && <Text style={[styles.resultGenre, { color: colors.primary }]}>{item.category}</Text>}
+        <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={2}>{item.title || 'Untitled'}</Text>
+        <Text style={[styles.resultAuthor, { color: colors.textSecondary }]}>{item.author || 'Unknown Author'}</Text>
+        <View style={styles.tagRow}>
+          {item.category ? (
+            <View style={[styles.categoryTag, { backgroundColor: colors.primary + '15' }]}>
+              <Text style={[styles.categoryText, { color: colors.primary }]}>{item.category}</Text>
+            </View>
+          ) : null}
+          {item.rating ? (
+            <View style={styles.ratingRow}>
+              <Ionicons name="star" size={12} color="#f59e0b" />
+              <Text style={[styles.ratingText, { color: colors.textSecondary }]}>{item.rating}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      <Ionicons name="chevron-forward" size={18} color={colors.border} />
     </TouchableOpacity>
-
   );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
-      {/* Header */}
+      {/* ELITE HEADER */}
       <View style={[styles.header, { backgroundColor: dark ? colors.surface : colors.primary }]}>
-        <Text style={styles.headerTitle}>🔍 Search Hub</Text>
+        <Text style={styles.headerTitle}>Search Hub</Text>
+        <TouchableOpacity style={styles.qrBtn} onPress={() => navigation.navigate('QRScanner')}>
+          <Ionicons name="qr-code-outline" size={20} color="#fff" />
+        </TouchableOpacity>
       </View>
 
-
-      {/* AI Idea Box */}
-      <View style={[styles.aiBox, { backgroundColor: colors.surface, borderColor: dark ? colors.primary : '#e0e7ff', shadowColor: colors.primary }]}>
-        <View style={styles.aiHeader}>
-          <Ionicons name="sparkles" size={16} color={colors.primary} />
-          <Text style={[styles.aiTitle, { color: colors.primary }]}>AI Genius Suggestion</Text>
-        </View>
-        <Text style={[styles.aiSubText, { color: colors.textSecondary }]}>Tell me what kind of book you want...</Text>
-        <View style={styles.aiInputRow}>
-          <TextInput
-            style={[styles.aiInput, { backgroundColor: dark ? colors.background : '#f8fafc', color: colors.text, borderColor: colors.border }]}
-            placeholder="e.g., detectives in London, scary space stories..."
-            placeholderTextColor={colors.textSecondary}
-            value={aiIdea}
-            onChangeText={setAiIdea}
-            onSubmitEditing={handleAiIdeaSearch}
-          />
-          <TouchableOpacity style={[styles.aiActionBtn, { backgroundColor: colors.primary }]} onPress={handleAiIdeaSearch}>
-            <Ionicons name="arrow-forward" size={18} color="#fff" />
-          </TouchableOpacity>
-        </View>
+      {/* MODE SWITCHER */}
+      <View style={[styles.tabBar, { backgroundColor: colors.surface }]}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'ai' && { borderBottomColor: colors.primary }]} 
+          onPress={() => setActiveTab('ai')}
+        >
+          <Ionicons name="sparkles" size={16} color={activeTab === 'ai' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: activeTab === 'ai' ? colors.primary : colors.textSecondary }]}>Smart AI</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'advanced' && { borderBottomColor: colors.primary }]} 
+          onPress={() => setActiveTab('advanced')}
+        >
+          <Ionicons name="options" size={16} color={activeTab === 'advanced' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: activeTab === 'advanced' ? colors.primary : colors.textSecondary }]}>Advanced</Text>
+        </TouchableOpacity>
       </View>
 
-
-      {/* Search history - Always visible so user can quickly switch ideas */}
-      {history.length > 0 && (
-        <View style={styles.historySection}>
-          <View style={styles.historyHeader}>
-            <Text style={[styles.historyTitle, { color: colors.text }]}>Recent Searches</Text>
-
-            <TouchableOpacity onPress={handleClearHistory}>
-              <Text style={[styles.clearText, { color: colors.error }]}>Clear All</Text>
-            </TouchableOpacity>
-          </View>
-
-          {history.map((h, idx) => {
-            const searchTerm = h.term || h.searchQuery || h.query || (typeof h === 'string' ? h : '');
-            return (
-            <TouchableOpacity
-              key={idx}
-              style={[styles.historyChip, { backgroundColor: colors.surface, shadowColor: dark ? '#000' : '#475569' }]}
-              onPress={() => { setQuery(searchTerm); handleSearch(searchTerm); }}
-            >
-              <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-              <Text style={[styles.historyChipText, { color: colors.textSecondary }]}>{searchTerm}</Text>
-            </TouchableOpacity>
-
-            );
-          })}
-        </View>
-      )}
-
-      {/* Results */}
-      {loading ? (
-        <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
-      ) : hasSearched ? (
-
-        <FlatList
-          data={results}
-          keyExtractor={(b) => String(b._id)}
-          renderItem={renderResult}
-          contentContainerStyle={styles.resultsList}
-          ListHeaderComponent={
-            <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
-              {results.length} {isAiMode ? 'AI suggestions' : `results for "${query}"`}
-            </Text>
-          }
-
-          ListEmptyComponent={
-            <View style={styles.emptyBox}>
-              <Ionicons name="search-outline" size={50} color={colors.border} />
-              <Text style={[styles.emptyTitle, { color: colors.textSecondary }]}>No matching books</Text>
-              <Text style={[styles.emptyDesc, { color: colors.textSecondary, opacity: 0.7 }]}>Try different keywords or filters</Text>
+      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
+        {/* INPUT SECTION */}
+        <View style={styles.inputSection}>
+          {activeTab === 'ai' ? (
+            <View style={[styles.aiBox, { backgroundColor: colors.surface, borderColor: dark ? colors.primary + '40' : '#e0e7ff' }]}>
+              <Text style={[styles.aiHint, { color: colors.textSecondary }]}>Describe your ideal book...</Text>
+              <TextInput
+                style={[styles.aiInput, { color: colors.text, backgroundColor: dark ? colors.background : '#f8fafc' }]}
+                placeholder="e.g. A fast-paced mystery set in Tokyo with a female detective"
+                placeholderTextColor={colors.textSecondary + '80'}
+                value={aiIdea}
+                onChangeText={setAiIdea}
+                multiline
+                numberOfLines={3}
+              />
+              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={handleAiSearch}>
+                <Ionicons name="sparkles" size={18} color="#fff" />
+                <Text style={styles.aiButtonText}>Find Magic</Text>
+              </TouchableOpacity>
             </View>
-          }
+          ) : (
+            <View style={[styles.advancedBox, { backgroundColor: colors.surface }]}>
+              <View style={[styles.searchRow, { backgroundColor: dark ? colors.background : '#f1f5f9' }]}>
+                <Ionicons name="search" size={20} color={colors.textSecondary} />
+                <TextInput
+                  style={[styles.manualInput, { color: colors.text }]}
+                  placeholder="Title, Author, or ISBN..."
+                  placeholderTextColor={colors.textSecondary}
+                  value={query}
+                  onChangeText={setQuery}
+                  onSubmitEditing={() => handleManualSearch()}
+                />
+                <TouchableOpacity onPress={() => setShowFilters(!showFilters)}>
+                  <Ionicons name={showFilters ? "chevron-up-circle" : "add-circle-outline"} size={24} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
 
-        />
-      ) : (
-        <View style={styles.promptBox}>
-          <Ionicons name="search-circle-outline" size={64} color={colors.border} />
-          <Text style={[styles.promptText, { color: colors.textSecondary }]}>Search for books by title, author, or genre</Text>
+              {showFilters && (
+                <View style={styles.filterPanel}>
+                  <View style={styles.filterGroup}>
+                    <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
+                    <TextInput 
+                      style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
+                      placeholder="Any author" 
+                      value={authorFilter}
+                      onChangeText={setAuthorFilter}
+                    />
+                  </View>
+                  <View style={styles.filterGroup}>
+                    <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Genre</Text>
+                    <TextInput 
+                      style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
+                      placeholder="e.g. Fiction" 
+                      value={genreFilter}
+                      onChangeText={setGenreFilter}
+                    />
+                  </View>
+                  <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleManualSearch()}>
+                    <Text style={styles.applyBtnText}>Apply Advanced Search</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
         </View>
-      )}
 
+        {/* RESULTS SECTION */}
+        <View style={styles.resultsContainer}>
+          {loading ? (
+            <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
+          ) : hasSearched ? (
+            <View>
+              <View style={styles.resultsHeader}>
+                <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>
+                  {results.length} suggestions found
+                </Text>
+              </View>
+              {results.length > 0 ? (
+                results.map(item => <View key={item._id}>{renderResult({ item })}</View>)
+              ) : (
+                <View style={styles.emptyContainer}>
+                  <MaterialCommunityIcons name="book-search" size={64} color={colors.border} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No Matches Found</Text>
+                  <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Try adjusting your keywords or switching to Smart AI mode.</Text>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View style={styles.historySection}>
+              {history.length > 0 && (
+                <View>
+                  <View style={styles.historyHeader}>
+                    <Text style={[styles.historyTitle, { color: colors.text }]}>Recent Activity</Text>
+                    <TouchableOpacity onPress={clearSearchHistory}>
+                      <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Clear All</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.historyGrid}>
+                    {history.slice(0, 6).map((h, i) => (
+                      <TouchableOpacity 
+                        key={i} 
+                        style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                        onPress={() => {
+                          const term = h.term || h.searchQuery || h;
+                          setQuery(term);
+                          handleManualSearch(term);
+                        }}
+                      >
+                        <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                        <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>{h.term || h.searchQuery || h}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
+import { ScrollView } from 'react-native-gesture-handler';
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
-
-  header: { backgroundColor: '#1e3a5f', paddingTop: 50, paddingBottom: 16, paddingHorizontal: 16 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  searchBox: { margin: 12, backgroundColor: '#fff', borderRadius: 14, padding: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 3 },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  searchInput: { flex: 1, fontSize: 14, color: '#333', paddingVertical: 4 },
-  filtersPanel: { marginTop: 12, gap: 8 },
-  filterInput: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 9, fontSize: 13, backgroundColor: '#fafafa' },
-  historySection: { marginHorizontal: 12, marginBottom: 8 },
-  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  historyTitle: { fontSize: 14, fontWeight: '700', color: '#1e3a5f' },
-  clearText: { fontSize: 13, color: '#e53e3e', fontWeight: '600' },
-  historyChip: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 6, shadowOpacity: 0.04, shadowRadius: 3, elevation: 1 },
-  historyChipText: { fontSize: 13 },
-  resultsList: { paddingHorizontal: 12, paddingBottom: 24 },
-  resultCount: { fontSize: 13, marginBottom: 12, marginTop: 4 },
-  resultCard: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, padding: 12, marginBottom: 10, shadowOpacity: 0.05, shadowRadius: 5, elevation: 2 },
-
-  resultCover: { width: 50, height: 70, borderRadius: 6, overflow: 'hidden', marginRight: 12 },
-  coverImg: { width: 50, height: 70 },
-  coverPlaceholder: { width: 50, height: 70, backgroundColor: '#1e3a5f', justifyContent: 'center', alignItems: 'center' },
-  resultInfo: { flex: 1 },
-  resultTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
-  resultAuthor: { fontSize: 12, color: '#666', marginTop: 3 },
-  resultGenre: { fontSize: 11, color: '#1e3a5f', marginTop: 4, fontWeight: '600' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyBox: { alignItems: 'center', paddingTop: 40 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#aaa', marginTop: 12 },
-  emptyDesc: { fontSize: 13, color: '#bbb', marginTop: 4 },
-  promptText: { fontSize: 14, color: '#aaa', marginTop: 14, textAlign: 'center', paddingHorizontal: 40 },
-  aiBox: { margin: 12, marginTop: 4, backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#e0e7ff', shadowColor: '#6366f1', shadowOpacity: 0.08, shadowRadius: 10, elevation: 2 },
-  aiHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  aiTitle: { fontSize: 14, fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: 0.5 },
-  aiSubText: { fontSize: 12, color: '#64748b', marginBottom: 12 },
-  aiInputRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  aiInput: { flex: 1, backgroundColor: '#f8fafc', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#1e293b', borderStyle: 'dashed', borderWidth: 1, borderColor: '#cbd5e1' },
-  aiActionBtn: { backgroundColor: '#6366f1', width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center' }
+  header: { padding: 20, paddingTop: 60, paddingBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
+  qrBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12 },
+  tabBar: { flexDirection: 'row', height: 50, elevation: 4, shadowOpacity: 0.1 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderBottomWidth: 3, borderBottomColor: 'transparent' },
+  tabText: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  inputSection: { padding: 20 },
+  aiBox: { padding: 20, borderRadius: 24, borderWidth: 1, shadowColor: '#4f46e5', shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
+  aiHint: { fontSize: 14, fontWeight: '700', marginBottom: 12 },
+  aiInput: { borderRadius: 16, padding: 15, fontSize: 15, height: 100, textAlignVertical: 'top', marginBottom: 15 },
+  aiButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 16, gap: 10 },
+  aiButtonText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  advancedBox: { padding: 5 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 18, gap: 12 },
+  manualInput: { flex: 1, fontSize: 15, height: 50, fontWeight: '600' },
+  filterPanel: { marginTop: 15, gap: 15 },
+  filterGroup: { gap: 6 },
+  filterLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginLeft: 4 },
+  filterInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 14 },
+  applyBtn: { padding: 16, borderRadius: 16, alignItems: 'center' },
+  applyBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  resultsContainer: { paddingHorizontal: 20 },
+  resultsHeader: { marginBottom: 15 },
+  resultsCount: { fontSize: 13, fontWeight: '700' },
+  resultCard: { flexDirection: 'row', padding: 12, borderRadius: 20, marginBottom: 12, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+  resultCover: { width: 65, height: 90, borderRadius: 12, overflow: 'hidden', marginRight: 15 },
+  coverImg: { width: '100%', height: '100%' },
+  coverPlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+  resultInfo: { flex: 1, justifyContent: 'center' },
+  resultTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
+  resultAuthor: { fontSize: 12, marginBottom: 8 },
+  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  categoryTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  categoryText: { fontSize: 10, fontWeight: '800' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  ratingText: { fontSize: 11, fontWeight: '700' },
+  center: { padding: 40, alignItems: 'center' },
+  historySection: { marginTop: 10 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  historyTitle: { fontSize: 16, fontWeight: '800' },
+  historyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  historyChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
+  chipText: { fontSize: 12, fontWeight: '600', maxWidth: 100 },
+  emptyContainer: { alignItems: 'center', paddingVertical: 60, opacity: 0.8 },
+  emptyTitle: { fontSize: 18, fontWeight: '900', marginTop: 15 },
+  emptySub: { fontSize: 13, textAlign: 'center', marginTop: 8, paddingHorizontal: 40 }
 });
