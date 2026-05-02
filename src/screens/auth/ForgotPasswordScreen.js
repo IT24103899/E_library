@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView
+  ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView,
+  Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { forgotPassword, resetPassword } from '../../services/api';
@@ -162,6 +163,14 @@ export default function ForgotPasswordScreen({ navigation }) {
             <TouchableOpacity style={styles.resendBtn} onPress={() => setStep(1)}>
               <Text style={[styles.resendText, { color: colors.primary }]}>Use a different email address</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.outlineBtn, { borderColor: colors.primary }]} 
+              onPress={() => Linking.openURL('mailto:')}
+            >
+              <Ionicons name="mail-open-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+              <Text style={[styles.outlineBtnText, { color: colors.primary }]}>Open Email App</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -184,5 +193,15 @@ const styles = StyleSheet.create({
   primaryBtn: { height: 58, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginTop: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 2 },
   primaryBtnText: { color: '#fff', fontSize: 17, fontWeight: '800' },
   resendBtn: { marginTop: 20, alignItems: 'center' },
-  resendText: { fontSize: 14, fontWeight: '700' }
+  resendText: { fontSize: 14, fontWeight: '700' },
+  outlineBtn: { 
+    height: 58, 
+    borderRadius: 16, 
+    borderWidth: 2, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginTop: 15,
+    flexDirection: 'row'
+  },
+  outlineBtnText: { fontSize: 16, fontWeight: '800' }
 });
