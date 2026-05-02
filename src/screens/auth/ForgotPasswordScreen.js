@@ -27,11 +27,12 @@ export default function ForgotPasswordScreen({ navigation }) {
     
     setLoading(true);
     try {
-      await forgotPassword(email.trim());
+      await forgotPassword(email.trim().toLowerCase());
       Alert.alert('Success', 'Verification code sent to your email!');
       setStep(2);
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.message || 'Could not send verification code');
+      console.log('Forgot Password Request Error:', err);
+      Alert.alert('Error', err.response?.data?.message || 'Could not send verification code. Check your internet.');
     } finally {
       setLoading(false);
     }
@@ -55,7 +56,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await resetPassword(email.trim(), token.trim(), newPassword);
+      await resetPassword(email.trim().toLowerCase(), token.trim(), newPassword);
       Alert.alert('Success', 'Password reset successfully! You can now login.', [
         { text: 'OK', onPress: () => navigation.navigate('Login') }
       ]);
@@ -80,12 +81,12 @@ export default function ForgotPasswordScreen({ navigation }) {
           <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
             <Ionicons name="key-outline" size={40} color={colors.primary} />
           </View>
-          <h1 style={[styles.title, { color: colors.text }]}>Forgot Password?</h1>
-          <p style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Forgot Password?</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             {step === 1 
               ? "No worries! Enter your email and we'll send you a verification code."
               : `Enter the 6-digit code sent to ${email} and choose a new password.`}
-          </p>
+          </Text>
         </View>
 
         {step === 1 ? (
