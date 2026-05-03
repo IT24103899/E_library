@@ -19,6 +19,13 @@ const GENRES = [
   'History', 'Thriller', 'Biography', 'Horror', 'Poetry'
 ];
 
+const YEAR_RANGES = [
+  { label: 'Newest', value: '2024' },
+  { label: '2020s', value: '2020' },
+  { label: '2010s', value: '2010' },
+  { label: 'Classics', value: '1900' }
+];
+
 export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
   const { user, refreshUser } = useAuth();
@@ -271,13 +278,20 @@ export default function SearchScreen({ navigation }) {
                           <Ionicons name="person-outline" size={14} color={colors.primary} />
                           <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
                         </View>
-                        <TextInput 
-                          style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
-                          placeholder="Search by author name..." 
-                          placeholderTextColor={colors.textSecondary + '60'}
-                          value={authorFilter}
-                          onChangeText={setAuthorFilter}
-                        />
+                        <View style={styles.inputWrapper}>
+                          <TextInput 
+                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                            placeholder="Search by author name..." 
+                            placeholderTextColor={colors.textSecondary + '60'}
+                            value={authorFilter}
+                            onChangeText={setAuthorFilter}
+                          />
+                          {authorFilter.length > 0 && (
+                            <TouchableOpacity style={styles.clearBtn} onPress={() => setAuthorFilter('')}>
+                              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
                       </View>
 
                       {/* Genre Section with Chips */}
@@ -311,14 +325,19 @@ export default function SearchScreen({ navigation }) {
                             <Ionicons name="barcode-outline" size={14} color={colors.primary} />
                             <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>ISBN</Text>
                           </View>
-                          <TextInput 
-                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
-                            placeholder="ISBN-13" 
-                            placeholderTextColor={colors.textSecondary + '60'}
-                            value={isbnFilter}
-                            onChangeText={setIsbnFilter}
-                            keyboardType="numeric"
-                          />
+                          <View style={styles.inputWrapper}>
+                            <TextInput 
+                              style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                              placeholder="ISBN-13" 
+                              placeholderTextColor={colors.textSecondary + '60'}
+                              value={isbnFilter}
+                              onChangeText={setIsbnFilter}
+                              keyboardType="numeric"
+                            />
+                            <TouchableOpacity style={styles.clearBtn} onPress={() => navigation.navigate('QRScanner')}>
+                              <Ionicons name="scan-outline" size={20} color={colors.primary} />
+                            </TouchableOpacity>
+                          </View>
                         </View>
                         <View style={[styles.filterGroup, { flex: 0.8 }]}>
                           <View style={styles.labelRow}>
@@ -335,6 +354,27 @@ export default function SearchScreen({ navigation }) {
                             maxLength={4}
                           />
                         </View>
+                      </View>
+
+                      {/* Year Presets */}
+                      <View style={styles.filterGroup}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
+                          {YEAR_RANGES.map(yr => (
+                            <TouchableOpacity 
+                              key={yr.value} 
+                              style={[
+                                styles.yearChip, 
+                                { backgroundColor: yearFilter === yr.value ? colors.primary : colors.surface, 
+                                  borderColor: colors.border }
+                              ]}
+                              onPress={() => setYearFilter(yr.value)}
+                            >
+                              <Text style={[styles.yearChipText, { color: yearFilter === yr.value ? '#fff' : colors.textSecondary }]}>
+                                {yr.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
                       </View>
 
                       <View style={styles.filterGroup}>
@@ -516,6 +556,10 @@ const styles = StyleSheet.create({
   genreChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, marginRight: 8 },
   genreChipText: { fontSize: 13, fontWeight: '700' },
   sortBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', flexDirection: 'row', alignItems: 'center' },
+  inputWrapper: { position: 'relative', justifyContent: 'center' },
+  clearBtn: { position: 'absolute', right: 12 },
+  yearChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, marginRight: 8 },
+  yearChipText: { fontSize: 11, fontWeight: '700' },
   resultsContainer: { paddingHorizontal: 20 },
   resultsHeader: { marginBottom: 15 },
   resultsCount: { fontSize: 13, fontWeight: '700' },
