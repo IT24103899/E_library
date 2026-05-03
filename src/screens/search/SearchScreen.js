@@ -7,6 +7,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { ScrollView, Modal } from 'react-native';
 const { width } = Dimensions.get('window');
 
@@ -15,8 +16,15 @@ const ExpoSpeechRecognitionModule = null;
 
 export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
-  const { user } = useAuth();
-  
+  const { user, refreshUser } = useAuth();
+
+  // Refresh premium status on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (refreshUser) refreshUser().catch(e => console.log('Refresh failed', e));
+    }, [refreshUser])
+  );
+
   const isPremium = user?.isPremium || 
                     user?.role === 'admin' || 
                     String(user?.plan).toUpperCase() === 'PREMIER' ||
