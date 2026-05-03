@@ -103,8 +103,8 @@ export default function SearchScreen({ navigation }) {
     }
   };
 
-  const handleAiSearch = async () => {
-    const idea = aiIdea.trim();
+  const handleAiSearch = async (val = aiIdea) => {
+    const idea = val.trim();
     if (!idea) return;
     setLoading(true);
     setHasSearched(true);
@@ -357,9 +357,12 @@ export default function SearchScreen({ navigation }) {
                           key={i} 
                           style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                           onPress={() => {
-                            setQuery(termValue);
-                            handleManualSearch(termValue);
-                            setActiveTab('advanced');
+                            setAiIdea(termValue);
+                            setActiveTab('ai');
+                            // Use a small timeout to ensure state updates before search if necessary, 
+                            // but here we can just pass it directly if we refactor handleAiSearch 
+                            // or just let it use the new state.
+                            handleAiSearch(termValue);
                           }}
                         >
                           <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
