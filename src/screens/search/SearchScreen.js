@@ -359,10 +359,7 @@ export default function SearchScreen({ navigation }) {
                           onPress={() => {
                             setAiIdea(termValue);
                             setActiveTab('ai');
-                            // Use a small timeout to ensure state updates before search if necessary, 
-                            // but here we can just pass it directly if we refactor handleAiSearch 
-                            // or just let it use the new state.
-                            handleAiSearch(termValue);
+                            // Removed automatic search to allow user to edit the text as requested
                           }}
                         >
                           <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
