@@ -17,7 +17,10 @@ export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
   const { user } = useAuth();
   
-  const isPremium = user?.isPremium || user?.role === 'admin';
+  const isPremium = user?.isPremium || 
+                    user?.role === 'admin' || 
+                    String(user?.plan).toUpperCase() === 'PREMIER' ||
+                    String(user?.subscriptionPlan).toUpperCase() === 'PREMIER';
   
   // Search States
   const [query, setQuery] = useState('');
