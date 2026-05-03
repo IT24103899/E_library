@@ -55,14 +55,6 @@ export default function ReaderScreen({ route, navigation }) {
     };
   }, [navigation]);
 
-  // Auto-hide controls
-  useEffect(() => {
-    if (showControls) {
-      const timer = setTimeout(() => setShowControls(false), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [showControls]);
-
   // Load saved progress on mount
   useEffect(() => {
     if (user?._id && bookId) {
@@ -291,7 +283,11 @@ export default function ReaderScreen({ route, navigation }) {
             <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={1}>{bookTitle}</Text>
             <View style={styles.hdBadge}><Text style={styles.hdText}>HD</Text></View>
           </View>
-          <TouchableOpacity onPress={() => setShowRuler(!showRuler)}>
+          <TouchableOpacity onPress={() => {
+            const newState = !showRuler;
+            setShowRuler(newState);
+            if (newState) setShowControls(false); // Hide controls when entering Focus Mode
+          }}>
             <Ionicons name="pencil" size={22} color={showRuler ? colors.primary : colors.textSecondary} />
           </TouchableOpacity>
         </View>
