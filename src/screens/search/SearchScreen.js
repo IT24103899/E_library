@@ -10,14 +10,8 @@ import { useAuth } from '../../context/AuthContext';
 import { ScrollView, Modal } from 'react-native';
 const { width } = Dimensions.get('window');
 
-// Safety check for Expo Go (prevent native module crash)
-let ExpoSpeechRecognitionModule = null;
-try {
-  const Speech = require('expo-speech-recognition');
-  ExpoSpeechRecognitionModule = Speech.ExpoSpeechRecognitionModule;
-} catch (e) {
-  console.log('Voice Search: Native module not available (expected in Expo Go)');
-}
+// Voice Search Safety Guard (Native module removed for Expo Go stability)
+const ExpoSpeechRecognitionModule = null;
 
 export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
@@ -48,32 +42,10 @@ export default function SearchScreen({ navigation }) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const searchInputRef = useRef(null);
 
-  // Voice Search Event Listener (Manual implementation for safety)
+  // Voice Search logic removed for Expo Go stability
   useEffect(() => {
-    if (!ExpoSpeechRecognitionModule) return;
-    
-    const Speech = require('expo-speech-recognition');
-    const emitter = Speech.addSpeechRecognitionListener('result', (event) => {
-      const text = event.results[0]?.transcript;
-      if (text) {
-        setQuery(text);
-        if (event.isFinal) {
-          setIsListening(false);
-          setTimeout(() => handleManualSearch(text), 500);
-        }
-      }
-    });
-
-    const errorEmitter = Speech.addSpeechRecognitionListener('error', (event) => {
-      console.log('Voice Error:', event.error);
-      setIsListening(false);
-    });
-
-    return () => {
-      emitter.remove();
-      errorEmitter.remove();
-    };
-  }, [ExpoSpeechRecognitionModule]);
+    setIsListening(false);
+  }, []);
 
   useEffect(() => {
     if (isListening) {
@@ -88,26 +60,14 @@ export default function SearchScreen({ navigation }) {
     }
   }, [isListening, pulseAnim]);
 
-  const startVoiceSearch = async () => {
-    if (!ExpoSpeechRecognitionModule) {
-      Alert.alert('Voice Search', 'Voice recognition requires a native build. For now, please use the microphone on your keyboard.');
-      return;
-    }
-    try {
-      const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      if (!result.granted) {
-        Alert.alert('Permission Required', 'Microphone access is needed for voice search.');
-        return;
-      }
-      setIsListening(true);
-      ExpoSpeechRecognitionModule.start({ lang: 'en-US' });
-    } catch (e) {
-      Alert.alert('Voice Search', 'Voice recognition is preparing. Please try again in a moment or use the keyboard microphone.');
-    }
+  const startVoiceSearch = () => {
+    Alert.alert(
+      'Search Guidance',
+      'For the best experience, please use the microphone button on your keyboard. This ensures your search is accurate and fast!'
+    );
   };
 
   const stopVoiceSearch = () => {
-    ExpoSpeechRecognitionModule?.stop();
     setIsListening(false);
   };
 

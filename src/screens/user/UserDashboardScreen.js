@@ -192,7 +192,7 @@ export default function UserDashboardScreen({ navigation }) {
         <View style={styles.quoteWrapper}>
             <View style={[styles.quoteCard, { backgroundColor: colors.surface }]}>
                 <View style={styles.quoteIconBadge}>
-                  <Ionicons name="quote" size={20} color="#4f46e5" />
+                  <Ionicons name="chatbubble-ellipses" size={20} color="#4f46e5" />
                 </View>
                 <Text style={[styles.quoteText, { color: colors.text }]}>"{quote.text}"</Text>
                 <View style={styles.quoteDivider} />

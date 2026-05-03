@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Image, ScrollView, Alert
+  ActivityIndicator, RefreshControl, Image, ScrollView, Alert,
+  Animated, Modal, Dimensions
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getBooks, addToBookshelf, getBookshelf } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
@@ -27,6 +28,39 @@ export default function BooksScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [genre, setGenre] = useState('All');
+
+  // Voice Search States
+  const [isListening, setIsListening] = useState(false);
+  const pulseAnim = React.useRef(new Animated.Value(1)).current;
+
+  // Voice Search logic removed for Expo Go stability
+  useEffect(() => {
+    setIsListening(false);
+  }, []);
+
+  useEffect(() => {
+    if (isListening) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.5, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.stopAnimation();
+    }
+  }, [isListening, pulseAnim]);
+
+  const startVoiceSearch = () => {
+    Alert.alert(
+      'Search Guidance',
+      'For the best experience, please use the microphone button on your keyboard. This ensures your search is accurate and fast!'
+    );
+  };
+
+  const stopVoiceSearch = () => {
+    setIsListening(false);
+  };
 
   const fetchBooks = useCallback(async () => {
     try {
@@ -168,6 +202,9 @@ export default function BooksScreen({ navigation }) {
             value={search}
             onChangeText={setSearch}
           />
+          <TouchableOpacity onPress={startVoiceSearch} style={{ marginRight: 10 }}>
+            <Ionicons name="mic" size={22} color={isListening ? colors.primary : "#fff"} />
+          </TouchableOpacity>
           {search.length > 0 && (
             <TouchableOpacity onPress={() => setSearch('')}>
               <Ionicons name="close-circle" size={18} color="rgba(255,255,255,0.4)" />
@@ -214,6 +251,32 @@ export default function BooksScreen({ navigation }) {
           }
         />
       )}
+
+      {/* VOICE SEARCH MODAL */}
+      <Modal visible={isListening} transparent animationType="fade">
+        <View style={styles.voiceOverlay}>
+          <View style={[styles.voiceCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.voiceTitle, { color: colors.text }]}>Listening...</Text>
+            <Text style={[styles.voiceSub, { color: colors.textSecondary }]}>What book are you looking for?</Text>
+            
+            <View style={styles.pulseContainer}>
+              <Animated.View style={[styles.pulseCircle, { 
+                backgroundColor: colors.primary + '20',
+                transform: [{ scale: pulseAnim }]
+              }]} />
+              <TouchableOpacity style={[styles.micBig, { backgroundColor: colors.primary }]} onPress={stopVoiceSearch}>
+                <Ionicons name="mic" size={40} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.voiceQuery, { color: colors.primary }]}>{search || '...'}</Text>
+
+            <TouchableOpacity style={[styles.voiceCancel, { borderColor: colors.border }]} onPress={stopVoiceSearch}>
+              <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -261,5 +324,16 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   emptyState: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
   emptyTitle: { fontSize: 22, fontWeight: '900', marginTop: 25, textAlign: 'center' },
-  emptySub: { fontSize: 16, marginTop: 10, textAlign: 'center', opacity: 0.6, lineHeight: 24 }
+  emptySub: { fontSize: 16, marginTop: 10, textAlign: 'center', opacity: 0.6, lineHeight: 24 },
+
+  // Voice Search Styles
+  voiceOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+  voiceCard: { width: '85%', padding: 40, borderRadius: 32, alignItems: 'center', gap: 20 },
+  voiceTitle: { fontSize: 24, fontWeight: '900' },
+  voiceSub: { fontSize: 15, textAlign: 'center' },
+  pulseContainer: { width: 120, height: 120, justifyContent: 'center', alignItems: 'center', marginVertical: 20 },
+  pulseCircle: { position: 'absolute', width: 100, height: 100, borderRadius: 50 },
+  micBig: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', elevation: 10, shadowOpacity: 0.3, shadowRadius: 10 },
+  voiceQuery: { fontSize: 18, fontWeight: '700', textAlign: 'center', fontStyle: 'italic' },
+  voiceCancel: { marginTop: 20, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 16, borderWidth: 1 }
 });
