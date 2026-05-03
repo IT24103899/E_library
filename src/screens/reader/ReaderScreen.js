@@ -45,14 +45,17 @@ export default function ReaderScreen({ route, navigation }) {
   const autoRef = useRef(null);
   const countRef = useRef(null);
 
-  // Immersive Mode: Hide bottom tabs
+  // Immersive Mode: Hide bottom tabs & top header
   useEffect(() => {
+    navigation.setOptions({
+      headerShown: false // Remove the duplicate header
+    });
     navigation.getParent()?.setOptions({
       tabBarStyle: { display: 'none' }
     });
     return () => {
       navigation.getParent()?.setOptions({
-        tabBarStyle: undefined
+        tabBarStyle: { display: 'flex' }
       });
     };
   }, [navigation]);
@@ -273,7 +276,7 @@ export default function ReaderScreen({ route, navigation }) {
       {showControls && (
         <View style={[styles.topBar, { backgroundColor: readerTheme === 'white' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.85)' }]}>
           <TouchableOpacity 
-            style={styles.exitBtn} 
+            style={[styles.premiumExitBtn, { borderColor: tColors.text + '40' }]} 
             onPress={async () => {
               try {
                 if (bookId && currentPage > 0) {
@@ -285,10 +288,18 @@ export default function ReaderScreen({ route, navigation }) {
                   }
                 }
               } catch (e) {}
-              navigation.goBack();
+              // Restore bottom tabs before leaving
+              navigation.getParent()?.setOptions({
+                tabBarStyle: { display: 'flex' }
+              });
+              // Force navigation back to Main Discover page
+              navigation.navigate('Books', { 
+                screen: 'BooksList'
+              });
             }}
           >
-            <Ionicons name="close-circle" size={26} color={colors.primary} />
+            <Ionicons name="chevron-back" size={18} color={tColors.text} />
+            <Text style={[styles.exitText, { color: tColors.text }]}>Save & Exit</Text>
           </TouchableOpacity>
           <View style={styles.titleInfo}>
             <Text style={[styles.bookTitle, { color: tColors.text }]} numberOfLines={1}>{bookTitle}</Text>
@@ -462,7 +473,8 @@ function goToPage(n) {} // referenced in sendToWebView
 const styles = StyleSheet.create({
   container: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, paddingTop: 50, gap: 15, elevation: 5, shadowOpacity: 0.1, zIndex: 100 },
-  exitBtn: { padding: 5 },
+  premiumExitBtn: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, gap: 4 },
+  exitText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
   titleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 5 },
   bookTitle: { fontSize: 17, fontWeight: '900' },
   hdBadge: { backgroundColor: '#10b981', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5 },
