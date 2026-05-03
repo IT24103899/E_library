@@ -14,6 +14,11 @@ const { width } = Dimensions.get('window');
 // Voice Search Safety Guard (Native module removed for Expo Go stability)
 const ExpoSpeechRecognitionModule = null;
 
+const GENRES = [
+  'All', 'Fiction', 'Fantasy', 'Mystery', 'Romance', 'Science', 
+  'History', 'Thriller', 'Biography', 'Horror', 'Poetry'
+];
+
 export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
   const { user, refreshUser } = useAuth();
@@ -260,64 +265,115 @@ export default function SearchScreen({ navigation }) {
                     </View>
                   ) : (
                     <>
+                      {/* Author Section */}
                       <View style={styles.filterGroup}>
-                        <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
+                        <View style={styles.labelRow}>
+                          <Ionicons name="person-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
+                        </View>
                         <TextInput 
-                          style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
-                          placeholder="Any author" 
+                          style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                          placeholder="Search by author name..." 
+                          placeholderTextColor={colors.textSecondary + '60'}
                           value={authorFilter}
                           onChangeText={setAuthorFilter}
                         />
                       </View>
+
+                      {/* Genre Section with Chips */}
                       <View style={styles.filterGroup}>
-                        <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Genre</Text>
-                        <TextInput 
-                          style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
-                          placeholder="e.g. Fiction" 
-                          value={genreFilter}
-                          onChangeText={setGenreFilter}
-                        />
+                        <View style={styles.labelRow}>
+                          <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Select Genre</Text>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
+                          {GENRES.map(g => (
+                            <TouchableOpacity 
+                              key={g} 
+                              style={[
+                                styles.genreChip, 
+                                { backgroundColor: (genreFilter === g || (g === 'All' && !genreFilter)) ? colors.primary : colors.surface, 
+                                  borderColor: colors.border }
+                              ]}
+                              onPress={() => setGenreFilter(g === 'All' ? '' : g)}
+                            >
+                              <Text style={[styles.genreChipText, { color: (genreFilter === g || (g === 'All' && !genreFilter)) ? '#fff' : colors.textSecondary }]}>
+                                {g}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
                       </View>
+
                       <View style={styles.filterRow}>
-                        <View style={[styles.filterGroup, { flex: 1 }]}>
-                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>ISBN</Text>
+                        <View style={[styles.filterGroup, { flex: 1.2 }]}>
+                          <View style={styles.labelRow}>
+                            <Ionicons name="barcode-outline" size={14} color={colors.primary} />
+                            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>ISBN</Text>
+                          </View>
                           <TextInput 
-                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
-                            placeholder="ISBN number" 
+                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                            placeholder="ISBN-13" 
+                            placeholderTextColor={colors.textSecondary + '60'}
                             value={isbnFilter}
                             onChangeText={setIsbnFilter}
                             keyboardType="numeric"
                           />
                         </View>
-                        <View style={[styles.filterGroup, { flex: 1 }]}>
-                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Year</Text>
+                        <View style={[styles.filterGroup, { flex: 0.8 }]}>
+                          <View style={styles.labelRow}>
+                            <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+                            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Year</Text>
+                          </View>
                           <TextInput 
-                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
+                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
                             placeholder="YYYY" 
+                            placeholderTextColor={colors.textSecondary + '60'}
                             value={yearFilter}
                             onChangeText={setYearFilter}
                             keyboardType="numeric"
+                            maxLength={4}
                           />
                         </View>
                       </View>
+
                       <View style={styles.filterGroup}>
-                        <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Sort By</Text>
+                        <View style={styles.labelRow}>
+                          <Ionicons name="swap-vertical-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Sort Results By</Text>
+                        </View>
                         <View style={styles.sortOptions}>
-                          {['relevance', 'title', 'year', 'oldest'].map(opt => (
+                          {[
+                            { id: 'relevance', icon: 'flash' },
+                            { id: 'title', icon: 'text' },
+                            { id: 'year', icon: 'calendar' },
+                            { id: 'oldest', icon: 'history' }
+                          ].map(opt => (
                             <TouchableOpacity 
-                              key={opt}
-                              style={[styles.sortBtn, sortBy === opt && { backgroundColor: colors.primary, borderColor: colors.primary }]}
-                              onPress={() => setSortBy(opt)}
+                              key={opt.id}
+                              style={[
+                                styles.sortBtn, 
+                                sortBy === opt.id && { backgroundColor: colors.primary, borderColor: colors.primary }
+                              ]}
+                              onPress={() => setSortBy(opt.id)}
                             >
-                              <Text style={[styles.sortBtnText, { color: sortBy === opt ? '#fff' : colors.textSecondary }]}>
-                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                              <MaterialCommunityIcons 
+                                name={opt.icon} 
+                                size={14} 
+                                color={sortBy === opt.id ? '#fff' : colors.textSecondary} 
+                                style={{ marginRight: 4 }}
+                              />
+                              <Text style={[styles.sortBtnText, { color: sortBy === opt.id ? '#fff' : colors.textSecondary }]}>
+                                {opt.id.charAt(0).toUpperCase() + opt.id.slice(1)}
                               </Text>
                             </TouchableOpacity>
                           ))}
                         </View>
                       </View>
+
                       <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleManualSearch()}>
-                        <Text style={styles.applyBtnText}>Apply Advanced Search</Text>
+                        <Ionicons name="search" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.applyBtnText}>Search with Filters</Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -453,8 +509,13 @@ const styles = StyleSheet.create({
   filterGroup: { gap: 6 },
   filterLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginLeft: 4 },
   filterInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 14 },
-  applyBtn: { padding: 16, borderRadius: 16, alignItems: 'center' },
-  applyBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  applyBtn: { padding: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  applyBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  genreScroll: { marginTop: 4 },
+  genreChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, marginRight: 8 },
+  genreChipText: { fontSize: 13, fontWeight: '700' },
+  sortBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', flexDirection: 'row', alignItems: 'center' },
   resultsContainer: { paddingHorizontal: 20 },
   resultsHeader: { marginBottom: 15 },
   resultsCount: { fontSize: 13, fontWeight: '700' },
