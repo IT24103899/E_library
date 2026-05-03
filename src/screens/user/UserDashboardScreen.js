@@ -277,12 +277,18 @@ export default function UserDashboardScreen({ navigation }) {
                     <View style={[styles.pgBar, { backgroundColor: dark ? '#334155' : '#f1f5f9' }]}>
                         <LinearGradient 
                            colors={['#4f46e5', '#a855f7']} 
-                           style={[styles.pgFill, { width: `${continueReading.totalPages > 0 ? Math.max(5, (continueReading.pageNumber / continueReading.totalPages) * 100) : 0}%` }]} 
+                           style={[styles.pgFill, { 
+                             width: `${continueReading.totalPages > 0 
+                               ? Math.min(100, Math.max(5, (continueReading.pageNumber / continueReading.totalPages) * 100)) 
+                               : 0}%` 
+                           }]} 
                            start={{x:0, y:0}} end={{x:1, y:0}}
                         />
                     </View>
                     <Text style={[styles.pgPercent, { color: colors.primary }]}>
-                      {continueReading.totalPages > 0 ? Math.round((continueReading.pageNumber / continueReading.totalPages) * 100) : 0}%
+                      {continueReading.totalPages > 0 
+                        ? Math.min(100, Math.round((continueReading.pageNumber / continueReading.totalPages) * 100)) 
+                        : 0}%
                     </Text>
                 </View>
               </View>
