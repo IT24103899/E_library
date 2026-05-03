@@ -43,17 +43,9 @@ export default function ReaderScreen({ route, navigation }) {
   const autoRef = useRef(null);
   const countRef = useRef(null);
 
-  // Fullscreen toggle: Hide bottom tabs when reader is open
+  // Navigation configuration
   useEffect(() => {
-    const parent = navigation.getParent();
-    if (parent) {
-      parent.setOptions({ tabBarStyle: { display: 'none' } });
-    }
-    return () => {
-      if (parent) {
-        parent.setOptions({ tabBarStyle: { borderTopColor: '#f0f0f0', elevation: 8, display: 'flex' } });
-      }
-    };
+    // Keep navigation bar visible at all times
   }, [navigation]);
 
   // Load saved progress on mount
@@ -276,8 +268,8 @@ export default function ReaderScreen({ route, navigation }) {
             } catch (e) {
               console.log('Error logging progress/velocity:', e);
             }
-            // Redirect to Store list specifically within the Books tab
-            navigation.navigate('BooksList');
+            // Redirect explicitly to the Store tab and the BooksList screen
+            navigation.navigate('Books', { screen: 'BooksList' });
           }}
         >
           <Ionicons name="chevron-back" size={20} color="#fff" />
