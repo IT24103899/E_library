@@ -303,7 +303,6 @@ export default function ReaderScreen({ route, navigation }) {
           </TouchableOpacity>
           <View style={styles.titleInfo}>
             <Text style={[styles.bookTitle, { color: tColors.text }]} numberOfLines={1}>{bookTitle}</Text>
-            <View style={styles.hdBadge}><Text style={styles.hdText}>HD</Text></View>
           </View>
           
           <View style={styles.themeRow}>
