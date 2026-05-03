@@ -35,6 +35,8 @@ export default function ReaderScreen({ route, navigation }) {
   const [showJump, setShowJump] = useState(false);
   const [highlights, setHighlights] = useState([]);
   const [readingStats, setReadingStats] = useState(null);
+  const [readerTheme, setReaderTheme] = useState('dark'); // 'white', 'sepia', 'dark'
+
   
   const startTimeRef = useRef(Date.now());
   const initialPageRef = useRef(1);
@@ -189,6 +191,15 @@ export default function ReaderScreen({ route, navigation }) {
     } catch (_) {}
   }, []);
 
+  const getThemeColors = () => {
+    if (readerTheme === 'white') return { bg: '#ffffff', text: '#1e293b', ui: '#f8fafc' };
+    if (readerTheme === 'sepia') return { bg: '#f4ecd8', text: '#5b4636', ui: '#ede0c4' };
+    return { bg: '#0f172a', text: '#f8fafc', ui: '#1e293b' };
+  };
+
+  const tColors = getThemeColors();
+
+
   const progressPct = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
   const isBookmarked = bookmarks.some(b => b.pageNumber === currentPage);
 
@@ -200,9 +211,9 @@ export default function ReaderScreen({ route, navigation }) {
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
-    body { margin: 0; background: #525659; display: flex; justify-content: center; align-items: flex-start; height: 100vh; overflow: hidden; }
-    #container { width: 100%; height: 100%; overflow: auto; display: flex; justify-content: center; padding: 10px 0; }
-    canvas { box-shadow: 0 4px 12px rgba(0,0,0,0.5); background: white; max-width: 95%; }
+    body { margin: 0; background: ${tColors.bg}; display: flex; justify-content: center; align-items: flex-start; height: 100vh; overflow: hidden; transition: background 0.5s ease; }
+    #container { width: 100%; height: 100%; overflow: auto; display: flex; justify-content: center; padding: 15px 0; }
+    canvas { box-shadow: 0 10px 30px rgba(0,0,0,0.3); background: white; max-width: 92%; border-radius: 4px; }
   </style>
 </head>
 <body>
@@ -255,12 +266,12 @@ export default function ReaderScreen({ route, navigation }) {
   const [rulerPos, setRulerPos] = useState(250);
 
   return (
-    <View style={[styles.container, { backgroundColor: dark ? '#0f172a' : '#f1f5f9' }]}>
-      <StatusBar hidden={!showControls} />
+    <View style={[styles.container, { backgroundColor: tColors.bg }]}>
+      <StatusBar hidden={!showControls} barStyle={readerTheme === 'white' ? 'dark-content' : 'light-content'} />
 
-      {/* Top bar */}
+      {/* Top bar (Glassmorphism) */}
       {showControls && (
-        <View style={[styles.topBar, { backgroundColor: dark ? '#1e293b' : '#fff' }]}>
+        <View style={[styles.topBar, { backgroundColor: readerTheme === 'white' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.85)' }]}>
           <TouchableOpacity 
             style={styles.exitBtn} 
             onPress={async () => {
@@ -277,25 +288,32 @@ export default function ReaderScreen({ route, navigation }) {
               navigation.goBack();
             }}
           >
-            <Ionicons name="close-circle" size={24} color={colors.primary} />
+            <Ionicons name="close-circle" size={26} color={colors.primary} />
           </TouchableOpacity>
           <View style={styles.titleInfo}>
-            <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={1}>{bookTitle}</Text>
+            <Text style={[styles.bookTitle, { color: tColors.text }]} numberOfLines={1}>{bookTitle}</Text>
             <View style={styles.hdBadge}><Text style={styles.hdText}>HD</Text></View>
           </View>
+          
+          <View style={styles.themeRow}>
+             <TouchableOpacity style={[styles.themeBtn, { backgroundColor: '#ffffff' }]} onPress={() => setReaderTheme('white')} />
+             <TouchableOpacity style={[styles.themeBtn, { backgroundColor: '#f4ecd8' }]} onPress={() => setReaderTheme('sepia')} />
+             <TouchableOpacity style={[styles.themeBtn, { backgroundColor: '#0f172a' }]} onPress={() => setReaderTheme('dark')} />
+          </View>
+
           <TouchableOpacity onPress={() => {
             const newState = !showRuler;
             setShowRuler(newState);
-            if (newState) setShowControls(false); // Hide controls when entering Focus Mode
+            if (newState) setShowControls(false); 
           }}>
-            <Ionicons name="pencil" size={22} color={showRuler ? colors.primary : colors.textSecondary} />
+            <Ionicons name="pencil" size={22} color={showRuler ? colors.primary : tColors.text + '80'} />
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Progress bar (Vibrant) */}
-      <View style={[styles.progressBarBg, { backgroundColor: dark ? '#ffffff10' : '#e2e8f0' }]}>
-        <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.primary }]} />
+      {/* Progress bar (Vibrant Glow) */}
+      <View style={[styles.progressBarBg, { backgroundColor: readerTheme === 'white' ? '#e2e8f0' : '#ffffff15' }]}>
+        <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.5, shadowRadius: 10, elevation: 10 }]} />
       </View>
 
       {/* PDF Viewer */}
@@ -307,7 +325,7 @@ export default function ReaderScreen({ route, navigation }) {
         <WebView
           ref={webviewRef}
           source={{ html: singlePageHtml }}
-          style={[styles.webview, { backgroundColor: dark ? '#0f172a' : '#f1f5f9' }]}
+          style={[styles.webview, { backgroundColor: tColors.bg }]}
           onMessage={onMessage}
           javaScriptEnabled
           scrollEnabled={false}
@@ -316,14 +334,14 @@ export default function ReaderScreen({ route, navigation }) {
           onLoadEnd={() => setLoading(false)}
         />
         
-        {/* Content Highlighter / Focus Ruler */}
+        {/* Content Highlighter */}
         {showRuler && (
           <View 
-            style={[styles.focusRuler, { top: rulerPos }]} 
+            style={[styles.focusRuler, { top: rulerPos, backgroundColor: readerTheme === 'sepia' ? 'rgba(91, 70, 54, 0.15)' : 'rgba(250, 204, 21, 0.2)' }]} 
             onStartShouldSetResponder={() => true}
             onResponderMove={(evt) => setRulerPos(evt.nativeEvent.pageY - 50)}
           >
-            <View style={styles.rulerHandle} />
+            <View style={[styles.rulerHandle, { backgroundColor: readerTheme === 'sepia' ? '#5b4636' : '#facc15' }]} />
           </View>
         )}
 
@@ -334,39 +352,40 @@ export default function ReaderScreen({ route, navigation }) {
         )}
       </TouchableOpacity>
 
-      {/* Controls panel */}
+      {/* Controls panel (Glassmorphism) */}
       {showControls && (
-        <View style={[styles.controls, { backgroundColor: dark ? '#1e293b' : '#fff', borderTopColor: colors.border }]}>
+        <View style={[styles.controls, { backgroundColor: readerTheme === 'white' ? 'rgba(255,255,255,0.95)' : 'rgba(30,41,59,0.95)', borderTopColor: colors.border + '20' }]}>
           <View style={styles.navRow}>
             <TouchableOpacity style={styles.navBtn} onPress={goPrev} disabled={currentPage <= 1}>
-              <Ionicons name="arrow-back-circle" size={32} color={currentPage <= 1 ? colors.border : colors.primary} />
+              <Ionicons name="arrow-back-circle" size={42} color={currentPage <= 1 ? colors.border : colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setShowJump(true)} style={styles.pageIndicator}>
-              <Text style={[styles.pageText, { color: colors.text }]}>{currentPage} / {totalPages}</Text>
-              <Text style={[styles.pctText, { color: colors.textSecondary }]}>{progressPct}% COMPLETE</Text>
+              <Text style={[styles.pageText, { color: tColors.text }]}>{currentPage} / {totalPages}</Text>
+              <Text style={[styles.pctText, { color: tColors.text + '70' }]}>{progressPct}% COMPLETE</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.navBtn} onPress={goNext} disabled={currentPage >= totalPages}>
-              <Ionicons name="arrow-forward-circle" size={32} color={currentPage >= totalPages ? colors.border : colors.primary} />
+              <Ionicons name="arrow-forward-circle" size={42} color={currentPage >= totalPages ? colors.border : colors.primary} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.actionRow}>
+             {/* Redesigned buttons with more spacing */}
             <TouchableOpacity style={styles.actionBtn} onPress={zoomOut}>
-              <Ionicons name="remove-circle-outline" size={22} color={colors.text} />
+              <Ionicons name="remove-circle-outline" size={24} color={tColors.text} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionBtn} onPress={zoomIn}>
-              <Ionicons name="add-circle-outline" size={22} color={colors.text} />
+              <Ionicons name="add-circle-outline" size={24} color={tColors.text} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionBtn} onPress={handleAddBookmark}>
-              <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={22} color={isBookmarked ? colors.primary : colors.text} />
+              <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={24} color={isBookmarked ? colors.primary : tColors.text} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionBtn} onPress={() => setShowBookmarks(true)}>
-              <Ionicons name="list" size={22} color={colors.text} />
+              <Ionicons name="list" size={24} color={tColors.text} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionBtn} onPress={() => setAutoAdvance(!autoAdvance)}>
-              <Ionicons name={autoAdvance ? 'pause' : 'play-outline'} size={22} color={autoAdvance ? colors.primary : colors.text} />
+              <Ionicons name={autoAdvance ? 'pause' : 'play-outline'} size={24} color={autoAdvance ? colors.primary : tColors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -444,25 +463,27 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, paddingTop: 50, gap: 15, elevation: 5, shadowOpacity: 0.1, zIndex: 100 },
   exitBtn: { padding: 5 },
-  titleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  bookTitle: { fontSize: 16, fontWeight: '800' },
-  hdBadge: { backgroundColor: '#10b981', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 },
-  hdText: { color: '#fff', fontSize: 8, fontWeight: '900' },
-  progressBarBg: { height: 4, width: '100%' },
+  titleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 5 },
+  bookTitle: { fontSize: 17, fontWeight: '900' },
+  hdBadge: { backgroundColor: '#10b981', paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5 },
+  hdText: { color: '#fff', fontSize: 9, fontWeight: '900' },
+  themeRow: { flexDirection: 'row', gap: 8, marginRight: 15 },
+  themeBtn: { width: 22, height: 22, borderRadius: 11, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' },
+  progressBarBg: { height: 5, width: '100%' },
   progressBarFill: { height: '100%' },
   webview: { flex: 1 },
-  focusRuler: { position: 'absolute', left: 0, right: 0, height: 40, backgroundColor: 'rgba(250, 204, 21, 0.2)', borderTopWidth: 2, borderBottomWidth: 2, borderColor: '#facc15', zIndex: 50 },
-  rulerHandle: { position: 'absolute', right: 10, top: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: '#facc15', opacity: 0.5 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)' },
-  controls: { borderTopWidth: 1, paddingBottom: 20 },
+  focusRuler: { position: 'absolute', left: 0, right: 0, height: 45, borderTopWidth: 2, borderBottomWidth: 2, borderColor: 'rgba(250, 204, 21, 0.4)', zIndex: 50 },
+  rulerHandle: { position: 'absolute', right: 12, top: 12, width: 22, height: 22, borderRadius: 11, opacity: 0.6 },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.02)' },
+  controls: { borderTopWidth: 1, paddingBottom: 25, shadowOpacity: 0.2, shadowRadius: 15, elevation: 20 },
 
-  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 15, gap: 40 },
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 20, gap: 45 },
   navBtn: { padding: 8 },
   pageIndicator: { alignItems: 'center' },
-  pageText: { fontSize: 15, fontWeight: '700', color: '#1e3a5f' },
-  pctText: { fontSize: 11, color: '#888' },
-  actionRow: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 16, paddingHorizontal: 8 },
-  actionBtn: { alignItems: 'center', padding: 8, borderRadius: 8 },
+  pageText: { fontSize: 18, fontWeight: '900' },
+  pctText: { fontSize: 10, fontWeight: '800', marginTop: 3 },
+  actionRow: { flexDirection: 'row', justifyContent: 'space-around', paddingBottom: 10, paddingHorizontal: 20 },
+  actionBtn: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.03)' },
   actionBtnActive: { backgroundColor: '#e3f2fd' },
   actionLabel: { fontSize: 10, color: '#555', marginTop: 3 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
