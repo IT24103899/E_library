@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Image, RefreshControl, Dimensions, StatusBar
@@ -81,9 +82,15 @@ export default function UserDashboardScreen({ navigation }) {
           
           if (currentBook) {
             // If the latest activity is the same book, use its (likely newer) progress
-            if (currentBook._id === recentBookId) {
+            // Convert to string for safe comparison
+            const cbId = String(currentBook._id);
+            const rbId = String(recentBookId);
+            
+            if (cbId === rbId) {
               currentBook.pageNumber = Math.max(currentBook.pageNumber, parseInt(recent.pageNumber) || 0);
-              if (!currentBook.totalPages) currentBook.totalPages = parseInt(recent.totalPages) || 0;
+              // Always use totalPages from activity if available as it's the source of truth for the reader
+              const recentTotal = parseInt(recent.totalPages) || 0;
+              if (recentTotal > 0) currentBook.totalPages = recentTotal;
             }
           } else if (recent.title && recent.title !== 'Unknown Book') {
             // If no bookshelf entry, use activity as fallback
@@ -110,7 +117,11 @@ export default function UserDashboardScreen({ navigation }) {
     }
   }, []); // continueReading dependency removed to prevent infinite loop on fast updates
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   // Reset image error and update version when user profile changes
   useEffect(() => {

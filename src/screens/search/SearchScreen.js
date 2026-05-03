@@ -163,7 +163,12 @@ export default function SearchScreen({ navigation }) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* ELITE HEADER */}
       <View style={[styles.header, { backgroundColor: dark ? colors.surface : colors.primary }]}>
-        <Text style={styles.headerTitle}>Search Hub</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={styles.headerTitle}>Search Hub</Text>
+          <TouchableOpacity onPress={() => { setHasSearched(false); loadHistory(); }}>
+            <Ionicons name="time-outline" size={22} color="#fff" style={{ opacity: 0.8 }} />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity style={styles.qrBtn} onPress={() => navigation.navigate('QRScanner')}>
           <Ionicons name="qr-code-outline" size={20} color="#fff" />
         </TouchableOpacity>
@@ -343,32 +348,35 @@ export default function SearchScreen({ navigation }) {
                     </TouchableOpacity>
                   </View>
                   <View style={styles.historyGrid}>
-                    {history.slice(0, 10).map((h, i) => (
-                      <TouchableOpacity 
-                        key={i} 
-                        style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                        onPress={() => {
-                          const term = h.term || h.searchQuery || h;
-                          setQuery(term);
-                          searchInputRef.current?.focus();
-                          handleManualSearch(term);
-                        }}
-                      >
-                        <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-                        <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>{h.term || h.searchQuery || h}</Text>
+                    {history.slice(0, 10).map((h, i) => {
+                      const termValue = typeof h === 'string' ? h : (h.term || h.searchQuery || '');
+                      if (!termValue) return null;
+                      
+                      return (
                         <TouchableOpacity 
-                          style={{ marginLeft: 4, padding: 2 }}
-                          onPress={(e) => {
-                            e.stopPropagation();
-                            const term = h.term || h.searchQuery || h;
-                            setQuery(term);
-                            searchInputRef.current?.focus();
+                          key={i} 
+                          style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                          onPress={() => {
+                            setQuery(termValue);
+                            handleManualSearch(termValue);
+                            setActiveTab('advanced');
                           }}
                         >
-                          <Ionicons name="arrow-up-outline" size={12} color={colors.primary} style={{ transform: [{ rotate: '45deg' }] }} />
+                          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                          <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>{termValue}</Text>
+                          <TouchableOpacity 
+                            style={{ marginLeft: 4, padding: 2 }}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              setQuery(termValue);
+                              searchInputRef.current?.focus();
+                            }}
+                          >
+                            <Ionicons name="arrow-up-outline" size={12} color={colors.primary} style={{ transform: [{ rotate: '45deg' }] }} />
+                          </TouchableOpacity>
                         </TouchableOpacity>
-                      </TouchableOpacity>
-                    ))}
+                      );
+                    })}
                   </View>
                 </View>
               ) : (
