@@ -207,7 +207,7 @@ export default function SearchScreen({ navigation }) {
                 multiline
                 numberOfLines={3}
               />
-              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={handleAiSearch}>
+              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={() => handleAiSearch()}>
                 <Ionicons name="sparkles" size={18} color="#fff" />
                 <Text style={styles.aiButtonText}>Find Magic</Text>
               </TouchableOpacity>
