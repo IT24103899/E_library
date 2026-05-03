@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ActivityIndicator,
-  Alert, Modal, TextInput, ScrollView, Dimensions
+  Alert, Modal, TextInput, ScrollView, Dimensions, StatusBar
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,10 +43,25 @@ export default function ReaderScreen({ route, navigation }) {
   const autoRef = useRef(null);
   const countRef = useRef(null);
 
-  // Navigation configuration
+  // Immersive Mode: Hide bottom tabs
   useEffect(() => {
-    // Keep navigation bar visible at all times
+    navigation.getParent()?.setOptions({
+      tabBarStyle: { display: 'none' }
+    });
+    return () => {
+      navigation.getParent()?.setOptions({
+        tabBarStyle: undefined
+      });
+    };
   }, [navigation]);
+
+  // Auto-hide controls
+  useEffect(() => {
+    if (showControls) {
+      const timer = setTimeout(() => setShowControls(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showControls]);
 
   // Load saved progress on mount
   useEffect(() => {
@@ -205,14 +220,14 @@ export default function ReaderScreen({ route, navigation }) {
     const pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     
-    let pdfDoc = null, pageNum = ${currentPage}, scale = 1.2;
+    let pdfDoc = null, pageNum = ${currentPage}, scale = 2.5; // INCREASED SCALE FOR HD
     const canvas = document.getElementById('pdfCanvas');
     const ctx = canvas.getContext('2d');
 
     function renderPage(num) {
       if (!pdfDoc) return;
       pdfDoc.getPage(num).then(page => {
-        const viewport = page.getViewport({ scale: scale * (window.innerWidth / 600) });
+        const viewport = page.getViewport({ scale: scale * (window.innerWidth / 700) });
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         
@@ -230,7 +245,7 @@ export default function ReaderScreen({ route, navigation }) {
       } 
     }
 
-    function setZoom(s) { scale = s; renderPage(pageNum); }
+    function setZoom(s) { scale = s * 2.0; renderPage(pageNum); }
 
     pdfjsLib.getDocument({ url: '${proxyUrl}' }).promise.then(doc => {
       pdfDoc = doc;
@@ -244,136 +259,118 @@ export default function ReaderScreen({ route, navigation }) {
 </body>
 </html>`;
 
+  const [showRuler, setShowRuler] = useState(false);
+  const [rulerPos, setRulerPos] = useState(250);
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: dark ? '#0f172a' : '#f1f5f9' }]}>
+      <StatusBar hidden={!showControls} />
 
       {/* Top bar */}
-      <View style={[styles.topBar, { backgroundColor: dark ? colors.surface : colors.primary }]}>
-        <TouchableOpacity 
-          style={styles.exitBtn} 
-          onPress={async () => {
-            try {
-              if (bookId && currentPage > 0) {
-                // 1. Save standard progress to Mongo
-                await saveReadingProgress(bookId, currentPage, totalPages);
-                
-                // 2. Log velocity to Python
-                const durationSeconds = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
-                const pagesRead = Math.max(0, Math.abs(currentPage - initialPageRef.current));
-                
-                if (pagesRead > 0 || durationSeconds > 30) {
-                  await logReadingVelocity(user._id, bookId, pagesRead, durationSeconds);
-                }
-              }
-            } catch (e) {
-              console.log('Error logging progress/velocity:', e);
-            }
-            // Redirect explicitly to the Store tab and the BooksList screen
-            navigation.navigate('Books', { screen: 'BooksList' });
-          }}
-        >
-          <Ionicons name="chevron-back" size={20} color="#fff" />
-          <Text style={styles.exitText}>Save & Exit</Text>
-        </TouchableOpacity>
-        <Text style={styles.bookTitle} numberOfLines={1}>{bookTitle}</Text>
-        {readingStats && (
-          <View style={styles.statBadge}>
-            <Ionicons name="flash-outline" size={12} color="#fff" />
-            <Text style={styles.statText}>{readingStats.average_velocity_pph} pph</Text>
-          </View>
-        )}
-        <TouchableOpacity onPress={() => setShowControls((v) => !v)}>
-          <Ionicons name="options-outline" size={24} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-
-      {/* Progress bar */}
-      <View style={[styles.progressBarBg, { backgroundColor: dark ? '#1e293b' : '#333' }]}>
-        <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.accent }]} />
-      </View>
-
-
-      {/* PDF Viewer — Localized PDF.js for single-page control */}
-      {pdfUrl ? (
-        <View style={{ flex: 1 }}>
-          <WebView
-            ref={webviewRef}
-            source={{ html: singlePageHtml }}
-            style={styles.webview}
-            onMessage={onMessage}
-            javaScriptEnabled
-            originWhitelist={['*']}
-            onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
-          />
-          {loading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color="#1e3a5f" />
-              <Text style={styles.loadingText}>Loading PDF…</Text>
-            </View>
-          )}
-        </View>
-      ) : (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#525659' }}>
-          <Ionicons name="alert-circle-outline" size={60} color="#fff" />
-          <Text style={{ color: '#fff', marginTop: 16, fontSize: 16 }}>No PDF available for this book.</Text>
+      {showControls && (
+        <View style={[styles.topBar, { backgroundColor: dark ? '#1e293b' : '#fff' }]}>
           <TouchableOpacity 
-            style={[styles.exitBtn, { marginTop: 20 }]} 
-            onPress={() => navigation.goBack()}
+            style={styles.exitBtn} 
+            onPress={async () => {
+              try {
+                if (bookId && currentPage > 0) {
+                  await saveReadingProgress(bookId, currentPage, totalPages);
+                  const durationSeconds = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+                  const pagesRead = Math.max(0, Math.abs(currentPage - initialPageRef.current));
+                  if (pagesRead > 0 || durationSeconds > 30) {
+                    await logReadingVelocity(user._id, bookId, pagesRead, durationSeconds);
+                  }
+                }
+              } catch (e) {}
+              navigation.goBack();
+            }}
           >
-            <Text style={styles.exitText}>Go Back</Text>
+            <Ionicons name="close-circle" size={24} color={colors.primary} />
+          </TouchableOpacity>
+          <View style={styles.titleInfo}>
+            <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={1}>{bookTitle}</Text>
+            <View style={styles.hdBadge}><Text style={styles.hdText}>HD</Text></View>
+          </View>
+          <TouchableOpacity onPress={() => setShowRuler(!showRuler)}>
+            <Ionicons name="pencil" size={22} color={showRuler ? colors.primary : colors.textSecondary} />
           </TouchableOpacity>
         </View>
       )}
 
+      {/* Progress bar (Vibrant) */}
+      <View style={[styles.progressBarBg, { backgroundColor: dark ? '#ffffff10' : '#e2e8f0' }]}>
+        <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.primary }]} />
+      </View>
+
+      {/* PDF Viewer */}
+      <TouchableOpacity 
+        activeOpacity={1} 
+        style={{ flex: 1 }} 
+        onPress={() => setShowControls(!showControls)}
+      >
+        <WebView
+          ref={webviewRef}
+          source={{ html: singlePageHtml }}
+          style={[styles.webview, { backgroundColor: dark ? '#0f172a' : '#f1f5f9' }]}
+          onMessage={onMessage}
+          javaScriptEnabled
+          scrollEnabled={false}
+          originWhitelist={['*']}
+          onLoadStart={() => setLoading(true)}
+          onLoadEnd={() => setLoading(false)}
+        />
+        
+        {/* Content Highlighter / Focus Ruler */}
+        {showRuler && (
+          <View 
+            style={[styles.focusRuler, { top: rulerPos }]} 
+            onStartShouldSetResponder={() => true}
+            onResponderMove={(evt) => setRulerPos(evt.nativeEvent.pageY - 50)}
+          >
+            <View style={styles.rulerHandle} />
+          </View>
+        )}
+
+        {loading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+          </View>
+        )}
+      </TouchableOpacity>
+
       {/* Controls panel */}
       {showControls && (
-        <View style={[styles.controls, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
-          {/* Page navigation */}
+        <View style={[styles.controls, { backgroundColor: dark ? '#1e293b' : '#fff', borderTopColor: colors.border }]}>
           <View style={styles.navRow}>
             <TouchableOpacity style={styles.navBtn} onPress={goPrev} disabled={currentPage <= 1}>
-              <Ionicons name="chevron-back" size={20} color={currentPage <= 1 ? colors.textSecondary : colors.primary} />
+              <Ionicons name="arrow-back-circle" size={32} color={currentPage <= 1 ? colors.border : colors.primary} />
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setShowJump(true)} style={styles.pageIndicator}>
               <Text style={[styles.pageText, { color: colors.text }]}>{currentPage} / {totalPages}</Text>
-              <Text style={[styles.pctText, { color: colors.textSecondary }]}>{progressPct}%</Text>
+              <Text style={[styles.pctText, { color: colors.textSecondary }]}>{progressPct}% COMPLETE</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.navBtn} onPress={goNext} disabled={currentPage >= totalPages}>
-              <Ionicons name="chevron-forward" size={20} color={currentPage >= totalPages ? colors.textSecondary : colors.primary} />
+              <Ionicons name="arrow-forward-circle" size={32} color={currentPage >= totalPages ? colors.border : colors.primary} />
             </TouchableOpacity>
           </View>
 
-          {/* Action buttons */}
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.actionBtn} onPress={zoomOut}>
-              <Ionicons name="remove-outline" size={18} color={colors.text} />
-              <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>Zoom Out</Text>
+              <Ionicons name="remove-circle-outline" size={22} color={colors.text} />
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.actionBtn} onPress={zoomIn}>
-              <Ionicons name="add-outline" size={18} color={colors.text} />
-              <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>Zoom In</Text>
+              <Ionicons name="add-circle-outline" size={22} color={colors.text} />
             </TouchableOpacity>
-
-            <TouchableOpacity style={[styles.actionBtn, isBookmarked && { backgroundColor: dark ? 'rgba(129, 140, 248, 0.1)' : '#e3f2fd' }]} onPress={handleAddBookmark}>
-              <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color={isBookmarked ? colors.primary : colors.text} />
-              <Text style={[styles.actionLabel, { color: isBookmarked ? colors.primary : colors.textSecondary }]}>Bookmark</Text>
+            <TouchableOpacity style={styles.actionBtn} onPress={handleAddBookmark}>
+              <Ionicons name={isBookmarked ? 'bookmark' : 'bookmark-outline'} size={22} color={isBookmarked ? colors.primary : colors.text} />
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.actionBtn} onPress={() => setShowBookmarks(true)}>
-              <Ionicons name="list-outline" size={18} color={colors.text} />
-              <Text style={[styles.actionLabel, { color: colors.textSecondary }]}>Bookmarks</Text>
+              <Ionicons name="list" size={22} color={colors.text} />
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.actionBtn, autoAdvance && { backgroundColor: dark ? 'rgba(129, 140, 248, 0.1)' : '#e3f2fd' }]}
-              onPress={() => setAutoAdvance((v) => !v)}
-            >
-              <Ionicons name={autoAdvance ? 'pause-circle' : 'play-circle-outline'} size={18} color={autoAdvance ? colors.primary : colors.text} />
-              <Text style={[styles.actionLabel, { color: autoAdvance ? colors.primary : colors.textSecondary }]}>{autoAdvance ? `Auto (${countdown}s)` : 'Auto'}</Text>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setAutoAdvance(!autoAdvance)}>
+              <Ionicons name={autoAdvance ? 'pause' : 'play-outline'} size={22} color={autoAdvance ? colors.primary : colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -448,19 +445,22 @@ export default function ReaderScreen({ route, navigation }) {
 function goToPage(n) {} // referenced in sendToWebView
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#525659' },
-  topBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1e3a5f', paddingHorizontal: 16, paddingVertical: 12, paddingTop: 44, gap: 12 },
-  exitBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-  exitText: { color: '#fff', fontSize: 13, fontWeight: '700', marginLeft: 2 },
-  bookTitle: { flex: 1, color: '#fff', fontSize: 15, fontWeight: '600' },
-  progressBarBg: { height: 3, backgroundColor: '#333' },
-  progressBarFill: { height: 3 },
+  container: { flex: 1 },
+  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, paddingTop: 50, gap: 15, elevation: 5, shadowOpacity: 0.1, zIndex: 100 },
+  exitBtn: { padding: 5 },
+  titleInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bookTitle: { fontSize: 16, fontWeight: '800' },
+  hdBadge: { backgroundColor: '#10b981', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 },
+  hdText: { color: '#fff', fontSize: 8, fontWeight: '900' },
+  progressBarBg: { height: 4, width: '100%' },
+  progressBarFill: { height: '100%' },
   webview: { flex: 1 },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  loadingText: { marginTop: 12, color: '#fff', fontSize: 15 },
-  controls: { borderTopWidth: 1 },
+  focusRuler: { position: 'absolute', left: 0, right: 0, height: 40, backgroundColor: 'rgba(250, 204, 21, 0.2)', borderTopWidth: 2, borderBottomWidth: 2, borderColor: '#facc15', zIndex: 50 },
+  rulerHandle: { position: 'absolute', right: 10, top: 10, width: 20, height: 20, borderRadius: 10, backgroundColor: '#facc15', opacity: 0.5 },
+  loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)' },
+  controls: { borderTopWidth: 1, paddingBottom: 20 },
 
-  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 10, gap: 20 },
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 15, gap: 40 },
   navBtn: { padding: 8 },
   pageIndicator: { alignItems: 'center' },
   pageText: { fontSize: 15, fontWeight: '700', color: '#1e3a5f' },
