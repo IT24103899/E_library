@@ -54,10 +54,8 @@ export default function SearchScreen({ navigation }) {
   const [hasSearched, setHasSearched] = useState(false);
   
   // UI States
-  const [activeTab, setActiveTab] = useState('ai'); // 'ai' or 'advanced'
+  const [searchMode, setSearchMode] = useState('manual'); // 'manual' or 'ai'
   const [showFilters, setShowFilters] = useState(false);
-  const [aiIdea, setAiIdea] = useState('');
-  const [searchType, setSearchType] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
 
   // Voice Search States
@@ -103,46 +101,42 @@ export default function SearchScreen({ navigation }) {
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
 
-  const handleManualSearch = async (q = query) => {
-    const term = q.trim();
-    if (!term) return;
+  const handleSearch = async () => {
+    const term = query.trim();
+    const hasFilters = authorFilter.trim() || genreFilter.trim() || isbnFilter.trim() || yearFilter.trim();
+    if (!term && !hasFilters) return;
     setLoading(true);
     setHasSearched(true);
     try {
-      const params = { type: searchType, sort: sortBy };
-      if (authorFilter.trim()) params.author = authorFilter.trim();
-      if (genreFilter.trim()) params.category = genreFilter.trim();
-      if (isbnFilter.trim()) params.isbn = isbnFilter.trim();
-      if (yearFilter.trim()) params.year = yearFilter.trim();
+      let data = [];
+      if (searchMode === 'ai') {
+        const res = await getRecommendationsByIdea(term);
+        // Robust extraction from different possible response formats
+        data = res.data?.recommendations || 
+               res.data?.results || 
+               res.data?.books || 
+               (Array.isArray(res.data) ? res.data : []);
+      } else {
+        const params = { type: searchType || 'all', sort: sortBy };
+        if (authorFilter.trim()) params.author = authorFilter.trim();
+        if (genreFilter.trim()) params.category = genreFilter.trim();
+        if (isbnFilter.trim()) params.isbn = isbnFilter.trim();
+        if (yearFilter.trim()) params.year = yearFilter.trim();
+        const res = await searchBooks(term, params);
+        data = Array.isArray(res.data) ? res.data : [];
+      }
       
-      const res = await searchBooks(term, params);
-      setResults(Array.isArray(res.data) ? res.data : []);
-      await saveSearchHistory(term);
-      await loadHistory();
-    } catch (_) {
-      Alert.alert('Connection Issue', 'Could not reach the library server. Check your internet.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAiSearch = async (val = aiIdea) => {
-    const idea = val.trim();
-    if (!idea) return;
-    setLoading(true);
-    setHasSearched(true);
-    try {
-      const res = await getRecommendationsByIdea(idea);
-      const suggestions = Array.isArray(res.data) ? res.data : (res.data.recommendations || []);
-      setResults(suggestions);
-      
-      if (suggestions.length > 0) {
-        await saveSearchHistory(idea);
-        setAiIdea(''); 
-        await loadHistory();
+      setResults(data);
+      if (term) {
+        try {
+          await saveSearchHistory(term);
+          await loadHistory();
+        } catch (_) {
+          // Silently fail search history saving to avoid disrupting the user's search
+        }
       }
     } catch (_) {
-      Alert.alert('AI Offline', 'The AI engine is taking a break. Please try manual search or try again in a moment.');
+      Alert.alert('Search Error', 'Could not complete the request. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -197,40 +191,47 @@ export default function SearchScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* MODE SWITCHER */}
+      {/* UNIFIED MODE SWITCHER */}
       <View style={[styles.tabBar, { backgroundColor: colors.surface }]}>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'ai' && { borderBottomColor: colors.primary }]} 
-          onPress={() => setActiveTab('ai')}
+          style={[styles.tab, searchMode === 'manual' && { borderBottomColor: colors.primary }]} 
+          onPress={() => {
+            setSearchMode('manual');
+            setResults([]);
+            setHasSearched(false);
+          }}
         >
-          <Ionicons name="sparkles" size={16} color={activeTab === 'ai' ? colors.primary : colors.textSecondary} />
-          <Text style={[styles.tabText, { color: activeTab === 'ai' ? colors.primary : colors.textSecondary }]}>Smart AI</Text>
+          <Ionicons name="search" size={16} color={searchMode === 'manual' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: searchMode === 'manual' ? colors.primary : colors.textSecondary }]}>Keyword</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.tab, activeTab === 'advanced' && { borderBottomColor: colors.primary }]} 
-          onPress={() => setActiveTab('advanced')}
+          style={[styles.tab, searchMode === 'ai' && { borderBottomColor: colors.primary }]} 
+          onPress={() => {
+            setSearchMode('ai');
+            setResults([]);
+            setHasSearched(false);
+          }}
         >
-          <Ionicons name="options" size={16} color={activeTab === 'advanced' ? colors.primary : colors.textSecondary} />
-          <Text style={[styles.tabText, { color: activeTab === 'advanced' ? colors.primary : colors.textSecondary }]}>Advanced</Text>
+          <Ionicons name="bulb-outline" size={16} color={searchMode === 'ai' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: searchMode === 'ai' ? colors.primary : colors.textSecondary }]}>AI Search</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* INPUT SECTION */}
         <View style={styles.inputSection}>
-          {activeTab === 'ai' ? (
+          {searchMode === 'ai' ? (
             <View style={[styles.aiBox, { backgroundColor: colors.surface, borderColor: dark ? colors.primary + '40' : '#e0e7ff' }]}>
               <Text style={[styles.aiHint, { color: colors.textSecondary }]}>Describe your ideal book...</Text>
               <TextInput
                 style={[styles.aiInput, { color: colors.text, backgroundColor: dark ? colors.background : '#f8fafc' }]}
                 placeholder="e.g. A fast-paced mystery set in Tokyo with a female detective"
                 placeholderTextColor={colors.textSecondary + '80'}
-                value={aiIdea}
-                onChangeText={setAiIdea}
+                value={query}
+                onChangeText={setQuery}
                 multiline
                 numberOfLines={3}
               />
-              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={() => handleAiSearch()}>
+              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={() => handleSearch()}>
                 <Ionicons name="sparkles" size={18} color="#fff" />
                 <Text style={styles.aiButtonText}>Find Magic</Text>
               </TouchableOpacity>
@@ -246,11 +247,8 @@ export default function SearchScreen({ navigation }) {
                   placeholderTextColor={colors.textSecondary}
                   value={query}
                   onChangeText={setQuery}
-                  onSubmitEditing={() => handleManualSearch()}
+                  onSubmitEditing={() => handleSearch()}
                 />
-                <TouchableOpacity onPress={startVoiceSearch} style={styles.voiceBtn}>
-                  <Ionicons name="mic" size={20} color={colors.primary} />
-                </TouchableOpacity>
                 <TouchableOpacity onPress={() => setShowFilters(!showFilters)}>
                   <Ionicons name={showFilters ? "chevron-up-circle" : "add-circle-outline"} size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -258,20 +256,7 @@ export default function SearchScreen({ navigation }) {
 
               {showFilters && (
                 <View style={styles.filterPanel}>
-                  {!isPremium ? (
-                    <View style={[styles.premiumLocked, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
-                      <MaterialCommunityIcons name="crown" size={32} color={colors.primary} />
-                      <Text style={[styles.premiumTitle, { color: colors.text }]}>Premium Feature</Text>
-                      <Text style={[styles.premiumSub, { color: colors.textSecondary }]}>Advanced filters are reserved for our Elite members.</Text>
-                      <TouchableOpacity 
-                        style={[styles.upgradeBtn, { backgroundColor: colors.primary }]}
-                        onPress={() => navigation.navigate('Profile', { screen: 'Payment' })}
-                      >
-                        <Text style={styles.upgradeBtnText}>Upgrade Now</Text>
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <>
+                    <View>
                       {/* Author Section */}
                       <View style={styles.filterGroup}>
                         <View style={styles.labelRow}>
@@ -408,15 +393,14 @@ export default function SearchScreen({ navigation }) {
                               </Text>
                             </TouchableOpacity>
                           ))}
-                        </View>
                       </View>
+                    </View>
 
-                      <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleManualSearch()}>
-                        <Ionicons name="search" size={20} color="#fff" style={{ marginRight: 8 }} />
-                        <Text style={styles.applyBtnText}>Search with Filters</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
+                    <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleSearch()}>
+                      <Ionicons name="search" size={20} color="#fff" style={{ marginRight: 8 }} />
+                      <Text style={styles.applyBtnText}>Search with Filters</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </View>
@@ -438,9 +422,13 @@ export default function SearchScreen({ navigation }) {
                 results.map(item => <View key={item._id}>{renderResult({ item })}</View>)
               ) : (
                 <View style={styles.emptyContainer}>
-                  <MaterialCommunityIcons name="book-search" size={64} color={colors.border} />
+                  <MaterialCommunityIcons name={searchMode === 'ai' ? "auto-fix" : "book-search"} size={64} color={colors.border} />
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>No Matches Found</Text>
-                  <Text style={[styles.emptySub, { color: colors.textSecondary }]}>Try adjusting your keywords or switching to Smart AI mode.</Text>
+                  <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+                    {searchMode === 'ai' 
+                      ? "The AI couldn't find exactly what you described. Try using different keywords or simpler terms."
+                      : "Try adjusting your filters or switching to AI Search mode."}
+                  </Text>
                 </View>
               )}
             </View>
@@ -464,9 +452,8 @@ export default function SearchScreen({ navigation }) {
                           key={i} 
                           style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                           onPress={() => {
-                            setAiIdea(termValue);
-                            setActiveTab('ai');
-                            // Removed automatic search to allow user to edit the text as requested
+                            setQuery(termValue);
+                            setSearchMode('manual');
                           }}
                         >
                           <Ionicons name="time-outline" size={14} color={colors.textSecondary} />

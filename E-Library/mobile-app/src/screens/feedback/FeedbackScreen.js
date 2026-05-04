@@ -19,7 +19,7 @@ const TYPES = [
 export default function FeedbackScreen({ navigation }) {
   const { user } = useAuth();
   const [type, setType] = useState('general');
-  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState({ bug: '', feature: '', general: '' });
   const [rating, setRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -27,17 +27,19 @@ export default function FeedbackScreen({ navigation }) {
 
   const validate = () => {
     const e = {};
-    if (!message.trim()) e.message = 'Please share your thoughts';
+    const currentMessage = messages[type];
+    if (!currentMessage || !currentMessage.trim()) e.message = 'Please share your thoughts';
     if (type === 'general' && rating === 0) e.rating = 'Pick a star';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async () => {
+    const currentMessage = messages[type];
     if (!validate()) return;
     setSubmitting(true);
     try {
-      await submitFeedback(type, message.trim(), rating, user?._id);
+      await submitFeedback(type, currentMessage.trim(), rating, user?._id);
       setSubmitted(true);
     } catch (err) {
       Alert.alert('Oops!', err.response?.data?.message || 'Connection lost. Try again?');
@@ -133,13 +135,16 @@ export default function FeedbackScreen({ navigation }) {
               style={styles.input}
               placeholder={type === 'bug' ? "What went wrong?" : type === 'feature' ? "What should we add?" : "Tell us more..."}
               placeholderTextColor="#94a3b8"
-              value={message}
-              onChangeText={(t) => { setMessage(t); setErrors((e) => ({ ...e, message: undefined })); }}
+              value={messages[type]}
+              onChangeText={(t) => { 
+                setMessages(prev => ({ ...prev, [type]: t })); 
+                setErrors((e) => ({ ...e, message: undefined })); 
+              }}
               multiline
               numberOfLines={6}
               textAlignVertical="top"
             />
-            <Text style={styles.charCount}>{message.length} / 500</Text>
+            <Text style={styles.charCount}>{(messages[type] || '').length} / 500</Text>
           </View>
 
           <TouchableOpacity 
