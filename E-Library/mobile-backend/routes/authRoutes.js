@@ -35,6 +35,6 @@ router.post('/reset-password', resetPassword);
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 router.put('/change-password', protect, changePassword);
-router.put('/avatar', protect, upload.single('avatar'), updateAvatar);
+router.post('/avatar', protect, upload.single('avatar'), updateAvatar);
 
 module.exports = router;
