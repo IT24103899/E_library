@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert, Image, Dimensions, Animated
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
+import { getBooks, searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -43,17 +43,23 @@ export default function SearchScreen({ navigation }) {
                     String(user?.subscriptionPlan).toUpperCase() === 'PREMIER';
   
   // Search States
-  const [query, setQuery] = useState('');
+  // Manual Search States
+  const [manualQuery, setManualQuery] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
   const [isbnFilter, setIsbnFilter] = useState('');
   const [yearFilter, setYearFilter] = useState('');
-  const [results, setResults] = useState([]);
+  const [manualResults, setManualResults] = useState([]);
+  const [hasManualSearched, setHasManualSearched] = useState(false);
+
+  // AI Search States
+  const [aiQuery, setAiQuery] = useState('');
+  const [aiResults, setAiResults] = useState([]);
+  const [hasAiSearched, setHasAiSearched] = useState(false);
+
+  // Shared States
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  
-  // UI States
   const [searchMode, setSearchMode] = useState('manual'); // 'manual' or 'ai'
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
@@ -101,12 +107,11 @@ export default function SearchScreen({ navigation }) {
 
   useEffect(() => { 
     loadHistory(); 
-    // Initial load of 10 featured books
     const loadInitialBooks = async () => {
       try {
-        const res = await getBooks(); // Use getBooks for initial load to avoid empty query issues
+        const res = await getBooks();
         const data = Array.isArray(res.data) ? res.data : [];
-        setResults(data.slice(0, 10));
+        setManualResults(data.slice(0, 10));
       } catch (e) {
         console.log("Initial load failed", e);
       }
@@ -115,40 +120,46 @@ export default function SearchScreen({ navigation }) {
   }, [loadHistory]);
 
   const handleSearch = async () => {
-    const term = query.trim();
+    const isAI = searchMode === 'ai';
+    const term = isAI ? aiQuery.trim() : manualQuery.trim();
     const hasFilters = authorFilter.trim() || genreFilter.trim() || isbnFilter.trim() || yearFilter.trim();
+    
     if (!term && !hasFilters) return;
+
     setLoading(true);
-    setHasSearched(true);
+    if (isAI) setHasAiSearched(true);
+    else setHasManualSearched(true);
+
     try {
       let data = [];
-      if (searchMode === 'ai') {
+      if (isAI) {
         const res = await getRecommendationsByIdea(term);
-        // Robust extraction from different possible response formats
+        // Extremely robust extraction for AI
         data = res.data?.recommendations || 
                res.data?.results || 
                res.data?.books || 
-               (Array.isArray(res.data) ? res.data : []);
+               res.data?.data ||
+               (Array.isArray(res.data) ? res.data : (res.data?.ai_suggestions || []));
+        setAiResults(data.slice(0, 10));
       } else {
-        const params = { type: searchType || 'all', sort: sortBy };
+        const params = { type: 'all', sort: sortBy };
         if (authorFilter.trim()) params.author = authorFilter.trim();
         if (genreFilter.trim()) params.category = genreFilter.trim();
         if (isbnFilter.trim()) params.isbn = isbnFilter.trim();
         if (yearFilter.trim()) params.year = yearFilter.trim();
         const res = await searchBooks(term, params);
         data = Array.isArray(res.data) ? res.data : [];
+        setManualResults(data.slice(0, 10));
       }
       
-      setResults(data.slice(0, 10));
       if (term) {
         try {
           await saveSearchHistory(term);
           await loadHistory();
-        } catch (_) {
-          // Silently fail search history saving to avoid disrupting the user's search
-        }
+        } catch (_) {}
       }
-    } catch (_) {
+    } catch (err) {
+      console.log("Search error:", err);
       Alert.alert('Search Error', 'Could not complete the request. Please try again.');
     } finally {
       setLoading(false);
@@ -243,8 +254,8 @@ export default function SearchScreen({ navigation }) {
                 style={[styles.aiInput, { color: colors.text, backgroundColor: dark ? colors.background : '#f1f5f9' }]}
                 placeholder="Describe your ideal book (e.g., A thriller set in space...)"
                 placeholderTextColor={colors.textSecondary + '70'}
-                value={query}
-                onChangeText={setQuery}
+                value={aiQuery}
+                onChangeText={setAiQuery}
                 multiline
                 numberOfLines={3}
               />
@@ -262,8 +273,8 @@ export default function SearchScreen({ navigation }) {
                   style={[styles.manualInput, { color: colors.text }]}
                   placeholder="Title, Author, or ISBN..."
                   placeholderTextColor={colors.textSecondary + '70'}
-                  value={query}
-                  onChangeText={setQuery}
+                  value={manualQuery}
+                  onChangeText={setManualQuery}
                   onSubmitEditing={() => handleSearch()}
                 />
                 <TouchableOpacity onPress={() => setShowFilters(!showFilters)} style={styles.tuneBtn}>
@@ -428,15 +439,15 @@ export default function SearchScreen({ navigation }) {
         <View style={styles.resultsContainer}>
           {loading ? (
             <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
-          ) : hasSearched ? (
+          ) : (searchMode === 'ai' ? hasAiSearched : hasManualSearched) ? (
             <View>
               <View style={styles.resultsHeader}>
                 <Text style={[styles.resultsCount, { color: colors.textSecondary }]}>
-                  {results.length} suggestions found
+                  {(searchMode === 'ai' ? aiResults : manualResults).length} suggestions found
                 </Text>
               </View>
-              {results.length > 0 ? (
-                results.map(item => <View key={item._id}>{renderResult({ item })}</View>)
+              {(searchMode === 'ai' ? aiResults : manualResults).length > 0 ? (
+                (searchMode === 'ai' ? aiResults : manualResults).map(item => <View key={item._id}>{renderResult({ item })}</View>)
               ) : (
                 <View style={styles.emptyContainer}>
                   <Ionicons name="sparkles-outline" size={64} color={colors.border} />
@@ -469,7 +480,7 @@ export default function SearchScreen({ navigation }) {
                           key={i} 
                           style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                           onPress={() => {
-                            setQuery(termValue);
+                            setManualQuery(termValue);
                             setSearchMode('manual');
                           }}
                         >
@@ -479,7 +490,8 @@ export default function SearchScreen({ navigation }) {
                             style={{ marginLeft: 4, padding: 2 }}
                             onPress={(e) => {
                               e.stopPropagation();
-                              setQuery(termValue);
+                              setManualQuery(termValue);
+                              setSearchMode('manual');
                               searchInputRef.current?.focus();
                             }}
                           >
@@ -518,7 +530,7 @@ export default function SearchScreen({ navigation }) {
               </TouchableOpacity>
             </View>
 
-            <Text style={[styles.voiceQuery, { color: colors.primary }]}>{query || '...'}</Text>
+            <Text style={[styles.voiceQuery, { color: colors.primary }]}>{manualQuery || '...'}</Text>
 
             <TouchableOpacity style={[styles.voiceCancel, { borderColor: colors.border }]} onPress={stopVoiceSearch}>
               <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
