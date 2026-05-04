@@ -133,7 +133,24 @@ router.post('/highlights', async (req, res) => {
   }
 });
 
-// DELETE /api/reader/highlights/:id
+// PUT /api/reader/highlights/:id   body: { content?, color? }
+router.put('/highlights/:id', async (req, res) => {
+  try {
+    const { content, color } = req.body;
+    const highlight = await Highlight.findById(req.params.id);
+    
+    if (!highlight) return res.status(404).json({ message: 'Highlight not found' });
+
+    if (content !== undefined) highlight.content = String(content);
+    if (color !== undefined) highlight.color = String(color);
+
+    await highlight.save();
+    res.json(toJson(highlight));
+  } catch (e) {
+    res.status(500).json({ message: 'Server error', error: e.message });
+  }
+});
+
 router.delete('/highlights/:id', async (req, res) => {
   try {
     const highlight = await Highlight.findByIdAndDelete(req.params.id);
