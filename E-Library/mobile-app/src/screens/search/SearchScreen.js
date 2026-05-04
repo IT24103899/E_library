@@ -99,7 +99,20 @@ export default function SearchScreen({ navigation }) {
     } catch (_) {}
   }, []);
 
-  useEffect(() => { loadHistory(); }, [loadHistory]);
+  useEffect(() => { 
+    loadHistory(); 
+    // Initial load of 10 featured books
+    const loadInitialBooks = async () => {
+      try {
+        const res = await searchBooks('', { limit: 10 });
+        const data = Array.isArray(res.data) ? res.data : [];
+        setResults(data.slice(0, 10));
+      } catch (e) {
+        console.log("Initial load failed", e);
+      }
+    };
+    loadInitialBooks();
+  }, [loadHistory]);
 
   const handleSearch = async () => {
     const term = query.trim();
@@ -126,7 +139,7 @@ export default function SearchScreen({ navigation }) {
         data = Array.isArray(res.data) ? res.data : [];
       }
       
-      setResults(data);
+      setResults(data.slice(0, 10));
       if (term) {
         try {
           await saveSearchHistory(term);
@@ -212,45 +225,49 @@ export default function SearchScreen({ navigation }) {
             setHasSearched(false);
           }}
         >
-          <Ionicons name="bulb-outline" size={16} color={searchMode === 'ai' ? colors.primary : colors.textSecondary} />
-          <Text style={[styles.tabText, { color: searchMode === 'ai' ? colors.primary : colors.textSecondary }]}>AI Search</Text>
+          <Ionicons name="sparkles-outline" size={16} color={searchMode === 'ai' ? colors.primary : colors.textSecondary} />
+          <Text style={[styles.tabText, { color: searchMode === 'ai' ? colors.primary : colors.textSecondary }]}>Smart AI</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 100 }}>
         <View style={styles.inputSection}>
           {searchMode === 'ai' ? (
-            <View style={[styles.aiBox, { backgroundColor: colors.surface, borderColor: dark ? colors.primary + '40' : '#e0e7ff' }]}>
-              <Text style={[styles.aiHint, { color: colors.textSecondary }]}>Describe your ideal book...</Text>
+            <View style={[styles.aiBox, { backgroundColor: colors.surface, borderColor: colors.primary + '30' }]}>
+              <View style={styles.aiHeaderRow}>
+                <Ionicons name="sparkles" size={20} color={colors.primary} />
+                <Text style={[styles.aiGeniusTitle, { color: colors.text }]}>AI GENIUS SUGGESTION</Text>
+              </View>
+              <Text style={[styles.aiSubHint, { color: colors.textSecondary }]}>Tell me what kind of book you want and AI will find it for you...</Text>
               <TextInput
-                style={[styles.aiInput, { color: colors.text, backgroundColor: dark ? colors.background : '#f8fafc' }]}
-                placeholder="e.g. A fast-paced mystery set in Tokyo with a female detective"
-                placeholderTextColor={colors.textSecondary + '80'}
+                style={[styles.aiInput, { color: colors.text, backgroundColor: dark ? colors.background : '#f1f5f9' }]}
+                placeholder="Describe your ideal book (e.g., A thriller set in space...)"
+                placeholderTextColor={colors.textSecondary + '70'}
                 value={query}
                 onChangeText={setQuery}
                 multiline
                 numberOfLines={3}
               />
               <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={() => handleSearch()}>
-                <Ionicons name="sparkles" size={18} color="#fff" />
+                <Ionicons name="sparkles-outline" size={20} color="#fff" />
                 <Text style={styles.aiButtonText}>Find Magic</Text>
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={[styles.advancedBox, { backgroundColor: colors.surface }]}>
-              <View style={[styles.searchRow, { backgroundColor: dark ? colors.background : '#f1f5f9' }]}>
-                <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <View style={styles.advancedBox}>
+              <View style={[styles.searchRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <Ionicons name="search-outline" size={20} color={colors.primary} />
                 <TextInput
                   ref={searchInputRef}
                   style={[styles.manualInput, { color: colors.text }]}
                   placeholder="Title, Author, or ISBN..."
-                  placeholderTextColor={colors.textSecondary}
+                  placeholderTextColor={colors.textSecondary + '70'}
                   value={query}
                   onChangeText={setQuery}
                   onSubmitEditing={() => handleSearch()}
                 />
-                <TouchableOpacity onPress={() => setShowFilters(!showFilters)}>
-                  <Ionicons name={showFilters ? "chevron-up-circle" : "add-circle-outline"} size={24} color={colors.primary} />
+                <TouchableOpacity onPress={() => setShowFilters(!showFilters)} style={styles.tuneBtn}>
+                  <Ionicons name="options" size={20} color={colors.primary} />
                 </TouchableOpacity>
               </View>
 
@@ -422,7 +439,7 @@ export default function SearchScreen({ navigation }) {
                 results.map(item => <View key={item._id}>{renderResult({ item })}</View>)
               ) : (
                 <View style={styles.emptyContainer}>
-                  <MaterialCommunityIcons name={searchMode === 'ai' ? "auto-fix" : "book-search"} size={64} color={colors.border} />
+                  <Ionicons name="sparkles-outline" size={64} color={colors.border} />
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>No Matches Found</Text>
                   <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
                     {searchMode === 'ai' 
@@ -518,79 +535,81 @@ export default function SearchScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 20, paddingTop: 60, paddingBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
-  qrBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12 },
-  tabBar: { flexDirection: 'row', height: 50, elevation: 4, shadowOpacity: 0.1 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderBottomWidth: 3, borderBottomColor: 'transparent' },
-  tabText: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  inputSection: { padding: 20 },
-  aiBox: { padding: 20, borderRadius: 24, borderWidth: 1, shadowColor: '#4f46e5', shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 },
-  aiHint: { fontSize: 14, fontWeight: '700', marginBottom: 12 },
-  aiInput: { borderRadius: 16, padding: 15, fontSize: 15, height: 100, textAlignVertical: 'top', marginBottom: 15 },
-  aiButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 16, borderRadius: 16, gap: 10 },
-  aiButtonText: { color: '#fff', fontSize: 16, fontWeight: '800' },
-  advancedBox: { padding: 5 },
-  searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 15, paddingVertical: 5, borderRadius: 18, gap: 12 },
-  manualInput: { flex: 1, fontSize: 15, height: 50, fontWeight: '600' },
-  filterPanel: { marginTop: 15, gap: 15 },
-  filterGroup: { gap: 6 },
-  filterLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginLeft: 4 },
-  filterInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 14 },
-  applyBtn: { padding: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
-  applyBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
-  genreScroll: { marginTop: 4 },
-  genreChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, marginRight: 8 },
-  genreChipText: { fontSize: 13, fontWeight: '700' },
-  sortBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', flexDirection: 'row', alignItems: 'center' },
+  headerTitle: { fontSize: 26, fontWeight: '900', color: '#fff', letterSpacing: -1 },
+  qrBtn: { padding: 10, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14 },
+  tabBar: { flexDirection: 'row', height: 55, elevation: 8, shadowOpacity: 0.15, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderBottomWidth: 3, borderBottomColor: 'transparent' },
+  tabText: { fontSize: 14, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.8 },
+  inputSection: { padding: 18 },
+  aiBox: { padding: 22, borderRadius: 28, borderWidth: 1.5, shadowColor: '#4f46e5', shadowOpacity: 0.2, shadowRadius: 25, elevation: 8 },
+  aiHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  aiGeniusTitle: { fontSize: 15, fontWeight: '900', letterSpacing: 1 },
+  aiSubHint: { fontSize: 13, marginBottom: 18, opacity: 0.8, fontWeight: '500' },
+  aiInput: { borderRadius: 18, padding: 18, fontSize: 15, height: 110, textAlignVertical: 'top', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
+  aiButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 18, borderRadius: 20, gap: 12, elevation: 4 },
+  aiButtonText: { color: '#fff', fontSize: 17, fontWeight: '900' },
+  advancedBox: { padding: 2 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18, paddingVertical: 4, borderRadius: 22, borderWidth: 1.5, gap: 12, elevation: 6, shadowOpacity: 0.1, shadowRadius: 10 },
+  tuneBtn: { padding: 8, backgroundColor: 'rgba(79, 70, 229, 0.1)', borderRadius: 12 },
+  manualInput: { flex: 1, fontSize: 16, height: 55, fontWeight: '700' },
+  filterPanel: { marginTop: 20, gap: 18, padding: 4 },
+  filterGroup: { gap: 8 },
+  filterLabel: { fontSize: 13, fontWeight: '900', textTransform: 'uppercase', marginLeft: 4, letterSpacing: 0.5 },
+  filterInput: { borderWidth: 1.5, borderRadius: 14, padding: 14, fontSize: 15, fontWeight: '600' },
+  applyBtn: { padding: 18, borderRadius: 20, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', elevation: 5 },
+  applyBtnText: { color: '#fff', fontWeight: '900', fontSize: 17 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  genreScroll: { marginTop: 6 },
+  genreChip: { paddingHorizontal: 18, paddingVertical: 12, borderRadius: 15, borderWidth: 1.5, marginRight: 10 },
+  genreChipText: { fontSize: 14, fontWeight: '800' },
+  sortBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: '#eee', flexDirection: 'row', alignItems: 'center' },
   inputWrapper: { position: 'relative', justifyContent: 'center' },
-  clearBtn: { position: 'absolute', right: 12 },
-  yearChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, marginRight: 8 },
-  yearChipText: { fontSize: 11, fontWeight: '700' },
-  resultsContainer: { paddingHorizontal: 20 },
-  resultsHeader: { marginBottom: 15 },
-  resultsCount: { fontSize: 13, fontWeight: '700' },
-  resultCard: { flexDirection: 'row', padding: 12, borderRadius: 20, marginBottom: 12, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-  resultCover: { width: 65, height: 90, borderRadius: 12, overflow: 'hidden', marginRight: 15 },
+  clearBtn: { position: 'absolute', right: 15 },
+  yearChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1.5, marginRight: 10 },
+  yearChipText: { fontSize: 12, fontWeight: '800' },
+  resultsContainer: { paddingHorizontal: 20, marginTop: 10 },
+  resultsHeader: { marginBottom: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  resultsCount: { fontSize: 14, fontWeight: '800', opacity: 0.7 },
+  resultCard: { flexDirection: 'row', padding: 15, borderRadius: 24, marginBottom: 15, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.03)' },
+  resultCover: { width: 75, height: 105, borderRadius: 16, overflow: 'hidden', marginRight: 18, elevation: 3 },
   coverImg: { width: '100%', height: '100%' },
   coverPlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
   resultInfo: { flex: 1, justifyContent: 'center' },
-  resultTitle: { fontSize: 15, fontWeight: '800', marginBottom: 4 },
-  resultAuthor: { fontSize: 12, marginBottom: 8 },
-  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  categoryTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  categoryText: { fontSize: 10, fontWeight: '800' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  ratingText: { fontSize: 11, fontWeight: '700' },
-  center: { padding: 40, alignItems: 'center' },
-  historySection: { marginTop: 10 },
-  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  historyTitle: { fontSize: 16, fontWeight: '800' },
-  historyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  historyChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1 },
-  chipText: { fontSize: 12, fontWeight: '600', maxWidth: 100 },
-  emptyContainer: { alignItems: 'center', paddingVertical: 60, opacity: 0.8 },
-  emptyTitle: { fontSize: 18, fontWeight: '900', marginTop: 15 },
-  emptySub: { fontSize: 13, textAlign: 'center', marginTop: 8, paddingHorizontal: 40 },
-  premiumLocked: { padding: 25, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed' },
-  premiumTitle: { fontSize: 18, fontWeight: '900', marginTop: 10 },
-  premiumSub: { fontSize: 13, textAlign: 'center', marginTop: 5, marginBottom: 15 },
-  upgradeBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
-  upgradeBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
-  noHistory: { alignItems: 'center', paddingVertical: 20, opacity: 0.5 },
-  noHistoryText: { fontSize: 14, marginTop: 8, fontWeight: '600' },
-  filterRow: { flexDirection: 'row', gap: 10 },
-  sortOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 5 },
-  sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' },
-  sortBtnText: { fontSize: 11, fontWeight: '700' },
-  voiceBtn: { padding: 5, marginRight: 5 },
-  voiceOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
-  voiceCard: { width: '85%', padding: 40, borderRadius: 32, alignItems: 'center', gap: 20 },
-  voiceTitle: { fontSize: 24, fontWeight: '900' },
-  voiceSub: { fontSize: 15, textAlign: 'center' },
-  pulseContainer: { width: 120, height: 120, justifyContent: 'center', alignItems: 'center', marginVertical: 20 },
-  pulseCircle: { position: 'absolute', width: 100, height: 100, borderRadius: 50 },
-  micBig: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', elevation: 10, shadowOpacity: 0.3, shadowRadius: 10 },
-  voiceQuery: { fontSize: 18, fontWeight: '700', textAlign: 'center', fontStyle: 'italic' },
-  voiceCancel: { marginTop: 20, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 16, borderWidth: 1 }
+  resultTitle: { fontSize: 17, fontWeight: '900', marginBottom: 6, lineHeight: 22 },
+  resultAuthor: { fontSize: 13, marginBottom: 10, fontWeight: '600' },
+  tagRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  categoryTag: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  categoryText: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  ratingText: { fontSize: 12, fontWeight: '800' },
+  center: { padding: 50, alignItems: 'center' },
+  historySection: { marginTop: 15 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, paddingHorizontal: 4 },
+  historyTitle: { fontSize: 17, fontWeight: '900', letterSpacing: -0.2 },
+  historyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  historyChip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 15, borderWidth: 1.5 },
+  chipText: { fontSize: 13, fontWeight: '700', maxWidth: 110 },
+  emptyContainer: { alignItems: 'center', paddingVertical: 70, opacity: 0.9 },
+  emptyTitle: { fontSize: 20, fontWeight: '900', marginTop: 20 },
+  emptySub: { fontSize: 14, textAlign: 'center', marginTop: 10, paddingHorizontal: 45, lineHeight: 20 },
+  premiumLocked: { padding: 30, borderRadius: 24, alignItems: 'center', borderWidth: 2, borderStyle: 'dashed' },
+  premiumTitle: { fontSize: 20, fontWeight: '900', marginTop: 12 },
+  premiumSub: { fontSize: 14, textAlign: 'center', marginTop: 8, marginBottom: 20 },
+  upgradeBtn: { paddingHorizontal: 25, paddingVertical: 12, borderRadius: 16 },
+  upgradeBtnText: { color: '#fff', fontWeight: '900', fontSize: 14 },
+  noHistory: { alignItems: 'center', paddingVertical: 30, opacity: 0.6 },
+  noHistoryText: { fontSize: 15, marginTop: 10, fontWeight: '700' },
+  filterRow: { flexDirection: 'row', gap: 12 },
+  sortOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 },
+  sortBtnText: { fontSize: 12, fontWeight: '800' },
+  voiceBtn: { padding: 8, marginRight: 5 },
+  voiceOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center' },
+  voiceCard: { width: '88%', padding: 45, borderRadius: 36, alignItems: 'center', gap: 25 },
+  voiceTitle: { fontSize: 26, fontWeight: '900' },
+  voiceSub: { fontSize: 16, textAlign: 'center', opacity: 0.8 },
+  pulseContainer: { width: 140, height: 140, justifyContent: 'center', alignItems: 'center', marginVertical: 25 },
+  pulseCircle: { position: 'absolute', width: 120, height: 120, borderRadius: 60 },
+  micBig: { width: 90, height: 90, borderRadius: 45, justifyContent: 'center', alignItems: 'center', elevation: 12, shadowOpacity: 0.4, shadowRadius: 15 },
+  voiceQuery: { fontSize: 20, fontWeight: '800', textAlign: 'center', fontStyle: 'italic', paddingHorizontal: 20 },
+  voiceCancel: { marginTop: 25, paddingHorizontal: 35, paddingVertical: 14, borderRadius: 18, borderWidth: 1.5 }
 });
