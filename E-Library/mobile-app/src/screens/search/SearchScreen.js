@@ -104,7 +104,7 @@ export default function SearchScreen({ navigation }) {
     // Initial load of 10 featured books
     const loadInitialBooks = async () => {
       try {
-        const res = await searchBooks('', { limit: 10 });
+        const res = await getBooks(); // Use getBooks for initial load to avoid empty query issues
         const data = Array.isArray(res.data) ? res.data : [];
         setResults(data.slice(0, 10));
       } catch (e) {
