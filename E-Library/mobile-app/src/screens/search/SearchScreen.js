@@ -4,6 +4,7 @@ import {
   ActivityIndicator, Alert, Image, Dimensions, Animated
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getBooks, searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -15,7 +16,7 @@ const { width } = Dimensions.get('window');
 const ExpoSpeechRecognitionModule = null;
 
 const GENRES = [
-  'All', 'Fiction', 'Fantasy', 'Mystery', 'Romance', 'Science', 
+  'All', 'Fiction', 'Fantasy', 'Mystery', 'Romance', 'Science',
   'History', 'Thriller', 'Biography', 'Horror', 'Poetry'
 ];
 
@@ -37,11 +38,11 @@ export default function SearchScreen({ navigation }) {
     }, [refreshUser])
   );
 
-  const isPremium = user?.isPremium || 
-                    user?.role === 'admin' || 
-                    String(user?.plan).toUpperCase() === 'PREMIER' ||
-                    String(user?.subscriptionPlan).toUpperCase() === 'PREMIER';
-  
+  const isPremium = user?.isPremium ||
+    user?.role === 'admin' ||
+    String(user?.plan).toUpperCase() === 'PREMIER' ||
+    String(user?.subscriptionPlan).toUpperCase() === 'PREMIER';
+
   // Search States
   // Manual Search States
   const [manualQuery, setManualQuery] = useState('');
@@ -102,11 +103,11 @@ export default function SearchScreen({ navigation }) {
     try {
       const res = await getSearchHistory();
       if (res.data) setHistory(res.data);
-    } catch (_) {}
+    } catch (_) { }
   }, []);
 
-  useEffect(() => { 
-    loadHistory(); 
+  useEffect(() => {
+    loadHistory();
     const loadInitialBooks = async () => {
       try {
         const res = await getBooks();
@@ -123,8 +124,11 @@ export default function SearchScreen({ navigation }) {
     const isAI = searchMode === 'ai';
     const term = isAI ? aiQuery.trim() : manualQuery.trim();
     const hasFilters = authorFilter.trim() || genreFilter.trim() || isbnFilter.trim() || yearFilter.trim();
-    
-    if (!term && !hasFilters) return;
+
+    if (!term && !hasFilters) {
+      Alert.alert('Required Field', 'Please enter a keyword or select a filter to search.');
+      return;
+    }
 
     setLoading(true);
     if (isAI) setHasAiSearched(true);
@@ -135,11 +139,11 @@ export default function SearchScreen({ navigation }) {
       if (isAI) {
         const res = await getRecommendationsByIdea(term);
         // Extremely robust extraction for AI
-        data = res.data?.recommendations || 
-               res.data?.results || 
-               res.data?.books || 
-               res.data?.data ||
-               (Array.isArray(res.data) ? res.data : (res.data?.ai_suggestions || []));
+        data = res.data?.recommendations ||
+          res.data?.results ||
+          res.data?.books ||
+          res.data?.data ||
+          (Array.isArray(res.data) ? res.data : (res.data?.ai_suggestions || []));
         setAiResults(data.slice(0, 10));
       } else {
         const params = { type: 'all', sort: sortBy };
@@ -151,12 +155,12 @@ export default function SearchScreen({ navigation }) {
         data = Array.isArray(res.data) ? res.data : [];
         setManualResults(data.slice(0, 10));
       }
-      
+
       if (term) {
         try {
           await saveSearchHistory(term);
           await loadHistory();
-        } catch (_) {}
+        } catch (_) { }
       }
     } catch (err) {
       console.log("Search error:", err);
@@ -175,8 +179,8 @@ export default function SearchScreen({ navigation }) {
         {item.coverUrl
           ? <Image source={{ uri: item.coverUrl }} style={styles.coverImg} resizeMode="cover" />
           : <View style={[styles.coverPlaceholder, { backgroundColor: colors.primary + '20' }]}>
-              <Ionicons name="book" size={24} color={colors.primary} />
-            </View>
+            <Ionicons name="book" size={24} color={colors.primary} />
+          </View>
         }
       </View>
       <View style={styles.resultInfo}>
@@ -206,7 +210,7 @@ export default function SearchScreen({ navigation }) {
       <View style={[styles.header, { backgroundColor: dark ? colors.surface : colors.primary }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Text style={styles.headerTitle}>Search Hub</Text>
-          <TouchableOpacity onPress={() => { setHasSearched(false); loadHistory(); }}>
+          <TouchableOpacity onPress={() => { setHasManualSearched(false); setHasAiSearched(false); loadHistory(); }}>
             <Ionicons name="time-outline" size={22} color="#fff" style={{ opacity: 0.8 }} />
           </TouchableOpacity>
         </View>
@@ -217,23 +221,23 @@ export default function SearchScreen({ navigation }) {
 
       {/* UNIFIED MODE SWITCHER */}
       <View style={[styles.tabBar, { backgroundColor: colors.surface }]}>
-        <TouchableOpacity 
-          style={[styles.tab, searchMode === 'manual' && { borderBottomColor: colors.primary }]} 
+        <TouchableOpacity
+          style={[styles.tab, searchMode === 'manual' && { borderBottomColor: colors.primary }]}
           onPress={() => {
             setSearchMode('manual');
-            setResults([]);
-            setHasSearched(false);
+            setManualResults([]);
+            setHasManualSearched(false);
           }}
         >
           <Ionicons name="search" size={16} color={searchMode === 'manual' ? colors.primary : colors.textSecondary} />
           <Text style={[styles.tabText, { color: searchMode === 'manual' ? colors.primary : colors.textSecondary }]}>Keyword</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, searchMode === 'ai' && { borderBottomColor: colors.primary }]} 
+        <TouchableOpacity
+          style={[styles.tab, searchMode === 'ai' && { borderBottomColor: colors.primary }]}
           onPress={() => {
             setSearchMode('ai');
-            setResults([]);
-            setHasSearched(false);
+            setAiResults([]);
+            setHasAiSearched(false);
           }}
         >
           <Ionicons name="sparkles-outline" size={16} color={searchMode === 'ai' ? colors.primary : colors.textSecondary} />
@@ -265,177 +269,141 @@ export default function SearchScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={styles.advancedBox}>
-              <View style={[styles.searchRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <Ionicons name="search-outline" size={20} color={colors.primary} />
+            <View style={styles.smartHub}>
+              {/* Main Search Bar */}
+              <View style={[styles.hubSearchRow, { backgroundColor: colors.surface, borderColor: colors.primary + '40' }]}>
+                <Ionicons name="search" size={22} color={colors.primary} />
                 <TextInput
                   ref={searchInputRef}
-                  style={[styles.manualInput, { color: colors.text }]}
-                  placeholder="Title, Author, or ISBN..."
+                  style={[styles.hubInput, { color: colors.text }]}
+                  placeholder="What are you looking for?"
                   placeholderTextColor={colors.textSecondary + '70'}
                   value={manualQuery}
                   onChangeText={setManualQuery}
                   onSubmitEditing={() => handleSearch()}
                 />
-                <TouchableOpacity onPress={() => setShowFilters(!showFilters)} style={styles.tuneBtn}>
-                  <Ionicons name="options" size={20} color={colors.primary} />
-                </TouchableOpacity>
               </View>
 
-              {showFilters && (
-                <View style={styles.filterPanel}>
-                    <View>
-                      {/* Author Section */}
-                      <View style={styles.filterGroup}>
-                        <View style={styles.labelRow}>
-                          <Ionicons name="person-outline" size={14} color={colors.primary} />
-                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
-                        </View>
-                        <View style={styles.inputWrapper}>
-                          <TextInput 
-                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
-                            placeholder="Search by author name..." 
-                            placeholderTextColor={colors.textSecondary + '60'}
-                            value={authorFilter}
-                            onChangeText={setAuthorFilter}
-                          />
-                          {authorFilter.length > 0 && (
-                            <TouchableOpacity style={styles.clearBtn} onPress={() => setAuthorFilter('')}>
-                              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                          )}
-                        </View>
-                      </View>
+              {/* Quick Categories */}
+              <View style={styles.hubSection}>
+                <Text style={[styles.hubLabel, { color: colors.textSecondary }]}>Browse Categories</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hubCarousel}>
+                  {GENRES.map(g => (
+                    <TouchableOpacity
+                      key={g}
+                      style={[
+                        styles.hubChip,
+                        {
+                          backgroundColor: (genreFilter === g || (g === 'All' && !genreFilter)) ? colors.primary : colors.surface,
+                          borderColor: colors.border
+                        }
+                      ]}
+                      onPress={() => setGenreFilter(g === 'All' ? '' : g)}
+                    >
+                      <Text style={[styles.hubChipText, { color: (genreFilter === g || (g === 'All' && !genreFilter)) ? '#fff' : colors.textSecondary }]}>
+                        {g}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
 
-                      {/* Genre Section with Chips */}
-                      <View style={styles.filterGroup}>
-                        <View style={styles.labelRow}>
-                          <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
-                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Select Genre</Text>
-                        </View>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
-                          {GENRES.map(g => (
-                            <TouchableOpacity 
-                              key={g} 
-                              style={[
-                                styles.genreChip, 
-                                { backgroundColor: (genreFilter === g || (g === 'All' && !genreFilter)) ? colors.primary : colors.surface, 
-                                  borderColor: colors.border }
-                              ]}
-                              onPress={() => setGenreFilter(g === 'All' ? '' : g)}
-                            >
-                              <Text style={[styles.genreChipText, { color: (genreFilter === g || (g === 'All' && !genreFilter)) ? '#fff' : colors.textSecondary }]}>
-                                {g}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </ScrollView>
-                      </View>
+              {/* Filter Grid */}
+              <View style={styles.hubGrid}>
+                {/* Author Tile */}
+                <View style={[styles.hubTile, { backgroundColor: colors.surface, borderColor: colors.border, flex: 1.5 }]}>
+                  <View style={styles.tileHeader}>
+                    <Ionicons name="person-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>Author</Text>
+                  </View>
+                  <TextInput
+                    style={[styles.tileInput, { color: colors.text }]}
+                    placeholder="Author name..."
+                    placeholderTextColor={colors.textSecondary + '50'}
+                    value={authorFilter}
+                    onChangeText={setAuthorFilter}
+                  />
+                </View>
 
-                      <View style={styles.filterRow}>
-                        <View style={[styles.filterGroup, { flex: 1.2 }]}>
-                          <View style={styles.labelRow}>
-                            <Ionicons name="barcode-outline" size={14} color={colors.primary} />
-                            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>ISBN</Text>
-                          </View>
-                          <View style={styles.inputWrapper}>
-                            <TextInput 
-                              style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
-                              placeholder="ISBN-13" 
-                              placeholderTextColor={colors.textSecondary + '60'}
-                              value={isbnFilter}
-                              onChangeText={setIsbnFilter}
-                              keyboardType="numeric"
-                            />
-                            <TouchableOpacity style={styles.clearBtn} onPress={() => navigation.navigate('QRScanner')}>
-                              <Ionicons name="scan-outline" size={20} color={colors.primary} />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                        <View style={[styles.filterGroup, { flex: 0.8 }]}>
-                          <View style={styles.labelRow}>
-                            <Ionicons name="calendar-outline" size={14} color={colors.primary} />
-                            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Year</Text>
-                          </View>
-                          <TextInput 
-                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
-                            placeholder="YYYY" 
-                            placeholderTextColor={colors.textSecondary + '60'}
-                            value={yearFilter}
-                            onChangeText={setYearFilter}
-                            keyboardType="numeric"
-                            maxLength={4}
-                          />
-                        </View>
-                      </View>
+                {/* Year Tile */}
+                <View style={[styles.hubTile, { backgroundColor: colors.surface, borderColor: colors.border, flex: 1 }]}>
+                  <View style={styles.tileHeader}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>Year</Text>
+                  </View>
+                  <TextInput
+                    style={[styles.tileInput, { color: colors.text }]}
+                    placeholder="YYYY"
+                    placeholderTextColor={colors.textSecondary + '50'}
+                    value={yearFilter}
+                    onChangeText={setYearFilter}
+                    keyboardType="numeric"
+                    maxLength={4}
+                  />
+                </View>
+              </View>
 
-                      {/* Year Presets */}
-                      <View style={styles.filterGroup}>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
-                          {YEAR_RANGES.map(yr => (
-                            <TouchableOpacity 
-                              key={yr.value} 
-                              style={[
-                                styles.yearChip, 
-                                { backgroundColor: yearFilter === yr.value ? colors.primary : colors.surface, 
-                                  borderColor: colors.border }
-                              ]}
-                              onPress={() => setYearFilter(yr.value)}
-                            >
-                              <Text style={[styles.yearChipText, { color: yearFilter === yr.value ? '#fff' : colors.textSecondary }]}>
-                                {yr.label}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </ScrollView>
-                      </View>
-
-                      <View style={styles.filterGroup}>
-                        <View style={styles.labelRow}>
-                          <Ionicons name="swap-vertical-outline" size={14} color={colors.primary} />
-                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Sort Results By</Text>
-                        </View>
-                        <View style={styles.sortOptions}>
-                          {[
-                            { id: 'relevance', icon: 'flash' },
-                            { id: 'title', icon: 'text' },
-                            { id: 'year', icon: 'calendar' },
-                            { id: 'oldest', icon: 'history' }
-                          ].map(opt => (
-                            <TouchableOpacity 
-                              key={opt.id}
-                              style={[
-                                styles.sortBtn, 
-                                sortBy === opt.id && { backgroundColor: colors.primary, borderColor: colors.primary }
-                              ]}
-                              onPress={() => setSortBy(opt.id)}
-                            >
-                              <MaterialCommunityIcons 
-                                name={opt.icon} 
-                                size={14} 
-                                color={sortBy === opt.id ? '#fff' : colors.textSecondary} 
-                                style={{ marginRight: 4 }}
-                              />
-                              <Text style={[styles.sortBtnText, { color: sortBy === opt.id ? '#fff' : colors.textSecondary }]}>
-                                {opt.id.charAt(0).toUpperCase() + opt.id.slice(1)}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                      </View>
-                    </View>
-
-                    <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleSearch()}>
-                      <Ionicons name="search" size={20} color="#fff" style={{ marginRight: 8 }} />
-                      <Text style={styles.applyBtnText}>Search with Filters</Text>
+              <View style={styles.hubGrid}>
+                {/* ISBN Tile */}
+                <View style={[styles.hubTile, { backgroundColor: colors.surface, borderColor: colors.border, flex: 1 }]}>
+                  <View style={styles.tileHeader}>
+                    <Ionicons name="barcode-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>ISBN</Text>
+                  </View>
+                  <View style={styles.tileActionRow}>
+                    <TextInput
+                      style={[styles.tileInput, { color: colors.text, flex: 1 }]}
+                      placeholder="13-digits"
+                      placeholderTextColor={colors.textSecondary + '50'}
+                      value={isbnFilter}
+                      onChangeText={setIsbnFilter}
+                      keyboardType="numeric"
+                    />
+                    <TouchableOpacity onPress={() => navigation.navigate('QRScanner')}>
+                      <Ionicons name="scan" size={20} color={colors.primary} />
                     </TouchableOpacity>
                   </View>
                 </View>
-              )}
+
+                {/* Sort Tile */}
+                <View style={[styles.hubTile, { backgroundColor: colors.surface, borderColor: colors.border, flex: 1 }]}>
+                  <View style={styles.tileHeader}>
+                    <Ionicons name="swap-vertical" size={14} color={colors.primary} />
+                    <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>Sort</Text>
+                  </View>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {['relevance', 'title', 'year'].map(opt => (
+                      <TouchableOpacity
+                        key={opt}
+                        onPress={() => setSortBy(opt)}
+                        style={[styles.miniSort, sortBy === opt && { backgroundColor: colors.primary + '20' }]}
+                      >
+                        <Text style={[styles.miniSortText, { color: sortBy === opt ? colors.primary : colors.textSecondary }]}>
+                          {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.hubSearchBtn, { backgroundColor: colors.primary }]}
+                onPress={() => handleSearch()}
+              >
+                <LinearGradient
+                  colors={[colors.primary, colors.primary + 'dd']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <Ionicons name="search" size={20} color="#fff" />
+                <Text style={styles.hubSearchBtnText}>Find Results</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* RESULTS SECTION */}
         <View style={styles.resultsContainer}>
           {loading ? (
             <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
@@ -453,7 +421,7 @@ export default function SearchScreen({ navigation }) {
                   <Ionicons name="sparkles-outline" size={64} color={colors.border} />
                   <Text style={[styles.emptyTitle, { color: colors.text }]}>No Matches Found</Text>
                   <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-                    {searchMode === 'ai' 
+                    {searchMode === 'ai'
                       ? "The AI couldn't find exactly what you described. Try using different keywords or simpler terms."
                       : "Try adjusting your filters or switching to AI Search mode."}
                   </Text>
@@ -474,10 +442,10 @@ export default function SearchScreen({ navigation }) {
                     {history.slice(0, 10).map((h, i) => {
                       const termValue = typeof h === 'string' ? h : (h.term || h.searchQuery || '');
                       if (!termValue) return null;
-                      
+
                       return (
-                        <TouchableOpacity 
-                          key={i} 
+                        <TouchableOpacity
+                          key={i}
                           style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
                           onPress={() => {
                             setManualQuery(termValue);
@@ -486,7 +454,7 @@ export default function SearchScreen({ navigation }) {
                         >
                           <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
                           <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>{termValue}</Text>
-                          <TouchableOpacity 
+                          <TouchableOpacity
                             style={{ marginLeft: 4, padding: 2 }}
                             onPress={(e) => {
                               e.stopPropagation();
@@ -519,9 +487,9 @@ export default function SearchScreen({ navigation }) {
           <View style={[styles.voiceCard, { backgroundColor: colors.surface }]}>
             <Text style={[styles.voiceTitle, { color: colors.text }]}>Listening...</Text>
             <Text style={[styles.voiceSub, { color: colors.textSecondary }]}>Tell me the book title or author</Text>
-            
+
             <View style={styles.pulseContainer}>
-              <Animated.View style={[styles.pulseCircle, { 
+              <Animated.View style={[styles.pulseCircle, {
                 backgroundColor: colors.primary + '20',
                 transform: [{ scale: pulseAnim }]
               }]} />
@@ -623,5 +591,25 @@ const styles = StyleSheet.create({
   pulseCircle: { position: 'absolute', width: 120, height: 120, borderRadius: 60 },
   micBig: { width: 90, height: 90, borderRadius: 45, justifyContent: 'center', alignItems: 'center', elevation: 12, shadowOpacity: 0.4, shadowRadius: 15 },
   voiceQuery: { fontSize: 20, fontWeight: '800', textAlign: 'center', fontStyle: 'italic', paddingHorizontal: 20 },
-  voiceCancel: { marginTop: 25, paddingHorizontal: 35, paddingVertical: 14, borderRadius: 18, borderWidth: 1.5 }
+  voiceCancel: { marginTop: 25, paddingHorizontal: 35, paddingVertical: 14, borderRadius: 18, borderWidth: 1.5 },
+
+  // Smart Hub Styles
+  smartHub: { gap: 20 },
+  hubSearchRow: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 24, borderWidth: 1.5, gap: 15, elevation: 4, shadowOpacity: 0.1, shadowRadius: 10 },
+  hubInput: { flex: 1, fontSize: 17, fontWeight: '700' },
+  hubSection: { gap: 10 },
+  hubLabel: { fontSize: 13, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1, marginLeft: 5 },
+  hubCarousel: { flexDirection: 'row' },
+  hubChip: { paddingHorizontal: 18, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, marginRight: 10 },
+  hubChipText: { fontSize: 13, fontWeight: '800' },
+  hubGrid: { flexDirection: 'row', gap: 12 },
+  hubTile: { padding: 15, borderRadius: 20, borderWidth: 1.5, gap: 8, elevation: 2, shadowOpacity: 0.05, shadowRadius: 5 },
+  tileHeader: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  tileLabel: { fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+  tileInput: { fontSize: 14, fontWeight: '700', padding: 0 },
+  tileActionRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  miniSort: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, marginRight: 6 },
+  miniSortText: { fontSize: 11, fontWeight: '800' },
+  hubSearchBtn: { height: 65, borderRadius: 24, overflow: 'hidden', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 12, elevation: 8, shadowOpacity: 0.3, shadowRadius: 15, marginTop: 10 },
+  hubSearchBtnText: { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }
 });
