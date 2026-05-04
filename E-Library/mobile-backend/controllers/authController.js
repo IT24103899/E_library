@@ -100,22 +100,29 @@ const loginUser = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    console.log('🔍 Forgot Password request for:', email);
-    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!email) {
+      return res.status(400).json({ message: 'Please provide an email address' });
+    }
+    const emailToSearch = email.trim().toLowerCase();
+    console.log('🔍 Forgot Password request for:', emailToSearch);
+    const user = await User.findOne({ email: emailToSearch });
 
     if (!user) {
-      console.log('❌ No user found for:', email);
-      return res.status(404).json({ message: 'No user found with that email' });
+      console.log('❌ No user found for:', emailToSearch);
+      return res.status(404).json({ message: 'No user found with that email. Please check the spelling or register first.' });
     }
 
     // Generate 6-digit numeric OTP
     const resetToken = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log('🔑 Generated OTP:', resetToken, 'for', user.email);
+    console.log(`🔑 Generated OTP for ${user.email}: ${resetToken}`);
     
+    // Store OTP and expiry
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
+    
+    // Explicitly save the changes
     await user.save();
-    console.log('💾 User record updated with OTP');
+    console.log('💾 User record updated with OTP successfully');
 
     // Send email (Awaited for better error tracking during development)
     try {

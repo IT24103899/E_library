@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, FlatList, TouchableOpacity,
-  ActivityIndicator, Image, RefreshControl
+  ActivityIndicator, Image, RefreshControl, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getBookshelf } from '../../services/api';
+import { getBookshelf, removeFromBookshelf } from '../../services/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -33,6 +33,28 @@ export default function BookshelfScreen({ navigation }) {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  
+  const handleRemove = async (bookId, title) => {
+    Alert.alert(
+      "Remove Book",
+      `Are you sure you want to remove "${title}" from your library?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Remove", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              await removeFromBookshelf(bookId);
+              fetchData(); // Refresh list
+            } catch (err) {
+              Alert.alert("Error", "Could not remove the book. Try again.");
+            }
+          } 
+        }
+      ]
+    );
+  };
 
   const books = bookshelf[activeTab] || [];
   const activeColor = SHELVES.find(s => s.id === activeTab)?.color || '#333';
@@ -89,7 +111,15 @@ export default function BookshelfScreen({ navigation }) {
                             <View style={[styles.coverPlaceholder, { backgroundColor: colors.border }]}><Ionicons name="book" size={24} color={colors.textSecondary} /></View>
                         )}
                         <View style={styles.info}>
-                            <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.bookId?.title || 'Unknown Book'}</Text>
+                            <View style={styles.titleRow}>
+                                <Text style={[styles.title, { color: colors.text }]} numberOfLines={2}>{item.bookId?.title || 'Unknown Book'}</Text>
+                                <TouchableOpacity 
+                                    style={styles.deleteBtn}
+                                    onPress={() => handleRemove(item.bookId?._id || item.bookId, item.bookId?.title)}
+                                >
+                                    <Ionicons name="trash-outline" size={20} color={colors.error || '#ff4444'} />
+                                </TouchableOpacity>
+                            </View>
                             <Text style={[styles.author, { color: colors.textSecondary }]}>{item.bookId?.author || 'Unknown'}</Text>
                             <View style={[styles.statusTag, { backgroundColor: activeColor + '20' }]}>
                                 <Text style={[styles.statusText, { color: activeColor }]}>{item.status}</Text>
@@ -138,7 +168,9 @@ const styles = StyleSheet.create({
   cover: { width: 85, height: 125, borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 },
   coverPlaceholder: { width: 85, height: 125, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
   info: { flex: 1, marginLeft: 20, justifyContent: 'center' },
-  title: { fontSize: 19, fontWeight: '900', marginBottom: 6, letterSpacing: -0.5 },
+  title: { fontSize: 19, fontWeight: '900', letterSpacing: -0.5, flex: 1 },
+  titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
+  deleteBtn: { padding: 5, marginLeft: 10 },
   author: { fontSize: 14, fontWeight: '700', marginBottom: 12, opacity: 0.7 },
   statusTag: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start' },
   statusText: { fontSize: 10, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },

@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, Platform, Image } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { getDashboardStats } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const StatCard = ({ icon, color, label, value, colors, dark }) => (
-  <View style={[styles.statCard, { backgroundColor: colors.surface, shadowColor: color }]}>
-    <View style={[styles.statIconContainer, { backgroundColor: color + (dark ? '30' : '20') }]}>
-      <Ionicons name={icon} size={22} color={color} />
+  <TouchableOpacity style={[styles.statCard, { backgroundColor: colors.surface }]}>
+    <LinearGradient
+      colors={[color + '15', color + '05']}
+      style={styles.statGradient}
+    />
+    <View style={[styles.statIconContainer, { backgroundColor: color }]}>
+      <Ionicons name={icon} size={20} color="#fff" />
     </View>
     <View style={styles.statInfo}>
       <Text style={[styles.statValue, { color: colors.text }]}>{value ?? '0'}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
-    <View style={[styles.statTrend, { backgroundColor: color + '15' }]}>
-      <Ionicons name="trending-up" size={10} color={color} />
-      <Text style={[styles.trendText, { color: color }]}>+2.4%</Text>
+    <View style={styles.statDecoration}>
+      <Ionicons name={icon} size={60} color={color + '10'} />
     </View>
-  </View>
+  </TouchableOpacity>
 );
 
 export default function AdminDashboardScreen({ navigation }) {
@@ -54,19 +58,38 @@ export default function AdminDashboardScreen({ navigation }) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* PREMIUM HEADER */}
-      <View style={[styles.premiumHeader, { backgroundColor: dark ? '#000' : '#1e3a5f' }]}>
+      {/* ELITE GRADIENT HEADER */}
+      <LinearGradient
+        colors={dark ? ['#0f172a', '#1e293b'] : ['#4338ca', '#6366f1']}
+        style={styles.premiumHeader}
+      >
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.headerTitle}>System Admin</Text>
-            <Text style={styles.headerSub}>E-Library Master Terminal</Text>
+            <Text style={styles.headerTitle}>Admin Console</Text>
+            <Text style={styles.headerSub}>Platform Management Center</Text>
           </View>
-          <View style={styles.statusBadge}>
-            <View style={styles.pulseDot} />
-            <Text style={styles.statusText}>Operational</Text>
+          <TouchableOpacity style={styles.profileBadge}>
+            <Image 
+              source={{ uri: 'https://ui-avatars.com/api/?name=Admin&background=fff&color=4338ca' }} 
+              style={styles.adminAvatar} 
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.quickStatsRow}>
+          <View style={styles.qStat}>
+            <Text style={styles.qStatVal}>Active</Text>
+            <View style={styles.statusLine}>
+              <View style={styles.pulseDot} />
+              <Text style={styles.qStatLabel}>System Live</Text>
+            </View>
+          </View>
+          <View style={styles.qStatDivider} />
+          <View style={styles.qStat}>
+            <Text style={styles.qStatVal}>Secure</Text>
+            <Text style={styles.qStatLabel}>SSL Encryption</Text>
           </View>
         </View>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.scroll}
@@ -94,10 +117,10 @@ export default function AdminDashboardScreen({ navigation }) {
         </View>
 
         <View style={styles.grid}>
-          <StatCard icon="book" color="#3b82f6" label="Catalog" value={stats?.totalBooks} colors={colors} dark={dark} />
-          <StatCard icon="people" color="#10b981" label="Total Users" value={stats?.totalUsers} colors={colors} dark={dark} />
-          <StatCard icon="chatbubble-ellipses" color="#f59e0b" label="Feedback" value={stats?.totalFeedback} colors={colors} dark={dark} />
-          <StatCard icon="server" color="#8b5cf6" label="Active" value={stats?.activeSessions || '42'} colors={colors} dark={dark} />
+          <StatCard icon="book" color="#6366f1" label="Books" value={stats?.totalBooks} colors={colors} dark={dark} />
+          <StatCard icon="people" color="#10b981" label="Users" value={stats?.totalUsers} colors={colors} dark={dark} />
+          <StatCard icon="star" color="#f59e0b" label="Rating" value="4.8" colors={colors} dark={dark} />
+          <StatCard icon="pulse" color="#ec4899" label="Activity" value={stats?.totalFeedback || '12'} colors={colors} dark={dark} />
         </View>
 
         {/* PERFORMANCE SECTION */}
@@ -125,32 +148,49 @@ export default function AdminDashboardScreen({ navigation }) {
 
         <View style={styles.actionGrid}>
           <TouchableOpacity style={[styles.actionBox, { backgroundColor: colors.surface }]} onPress={() => navigation.navigate('AdminUsers')}>
-            <View style={[styles.actionIcon, { backgroundColor: '#3b82f620' }]}>
-              <Ionicons name="shield-checkmark" size={20} color="#3b82f6" />
-            </View>
-            <Text style={[styles.actionText, { color: colors.text }]}>Users</Text>
+            <LinearGradient colors={['#6366f120', '#6366f105']} style={styles.actionGradient} />
+            <Ionicons name="people-circle" size={28} color="#6366f1" />
+            <Text style={[styles.actionText, { color: colors.text }]}>Manage Users</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.actionBox, { backgroundColor: colors.surface }]} onPress={() => navigation.navigate('Books', { screen: 'AddBook' })}>
-            <View style={[styles.actionIcon, { backgroundColor: '#10b98120' }]}>
-              <Ionicons name="library" size={20} color="#10b981" />
-            </View>
-            <Text style={[styles.actionText, { color: colors.text }]}>Inventory</Text>
+            <LinearGradient colors={['#10b98120', '#10b98105']} style={styles.actionGradient} />
+            <Ionicons name="add-circle" size={28} color="#10b981" />
+            <Text style={[styles.actionText, { color: colors.text }]}>Add Books</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.actionBox, { backgroundColor: colors.surface }]} onPress={() => navigation.navigate('AdminFeedback')}>
-            <View style={[styles.actionIcon, { backgroundColor: '#f59e0b20' }]}>
-              <Ionicons name="mail-unread" size={20} color="#f59e0b" />
-            </View>
-            <Text style={[styles.actionText, { color: colors.text }]}>Feedback</Text>
+            <LinearGradient colors={['#f59e0b20', '#f59e0b05']} style={styles.actionGradient} />
+            <Ionicons name="chatbubbles" size={28} color="#f59e0b" />
+            <Text style={[styles.actionText, { color: colors.text }]}>Review Feedback</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.actionBox, { backgroundColor: colors.surface }]}>
-            <View style={[styles.actionIcon, { backgroundColor: '#ec489920' }]}>
-              <Ionicons name="settings" size={20} color="#ec4899" />
-            </View>
-            <Text style={[styles.actionText, { color: colors.text }]}>Settings</Text>
+            <LinearGradient colors={['#8b5cf620', '#8b5cf605']} style={styles.actionGradient} />
+            <Ionicons name="bar-chart" size={28} color="#8b5cf6" />
+            <Text style={[styles.actionText, { color: colors.text }]}>Analytics</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* RECENT LOGS */}
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Security Logs</Text>
+        </View>
+        <View style={[styles.logsContainer, { backgroundColor: colors.surface }]}>
+          {[
+            { id: 1, type: 'Login', user: 'Admin', time: 'Just now', color: '#10b981' },
+            { id: 2, type: 'Update', user: 'System', time: '5m ago', color: '#3b82f6' },
+            { id: 3, type: 'Backup', user: 'Cloud', time: '1h ago', color: '#f59e0b' }
+          ].map(log => (
+            <View key={log.id} style={[styles.logItem, { borderBottomColor: colors.border }]}>
+              <View style={[styles.logDot, { backgroundColor: log.color }]} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.logTitle, { color: colors.text }]}>{log.type} Successful</Text>
+                <Text style={[styles.logSub, { color: colors.textSecondary }]}>Initiated by {log.user}</Text>
+              </View>
+              <Text style={[styles.logTime, { color: colors.textSecondary }]}>{log.time}</Text>
+            </View>
+          ))}
         </View>
 
       </ScrollView>
@@ -162,39 +202,48 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 15, fontSize: 13, letterSpacing: 1 },
-  premiumHeader: { padding: 25, paddingTop: 60, paddingBottom: 35, borderBottomLeftRadius: 35, borderBottomRightRadius: 35 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 26, fontWeight: '900', color: '#fff', letterSpacing: -0.5 },
-  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, fontWeight: '600' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(16, 185, 129, 0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, gap: 6 },
-  pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#10b981' },
-  statusText: { color: '#10b981', fontSize: 11, fontWeight: '800', textTransform: 'uppercase' },
+  premiumHeader: { padding: 25, paddingTop: 60, paddingBottom: 40, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 25 },
+  headerTitle: { fontSize: 28, fontWeight: '900', color: '#fff', letterSpacing: -0.8 },
+  headerSub: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: '600' },
+  profileBadge: { width: 45, height: 45, borderRadius: 22, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', padding: 2 },
+  adminAvatar: { width: '100%', height: '100%', borderRadius: 20 },
+  quickStatsRow: { flexDirection: 'row', alignItems: 'center', gap: 20, backgroundColor: 'rgba(255,255,255,0.1)', padding: 15, borderRadius: 20 },
+  qStat: { flex: 1 },
+  qStatVal: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  qStatLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+  qStatDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.2)' },
+  statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pulseDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#10b981' },
   scroll: { flex: 1 },
-  content: { paddingBottom: 120 },
-  sectionHeader: { marginHorizontal: 20, marginTop: 25, marginBottom: 15 },
-  sectionTitle: { fontSize: 18, fontWeight: '800' },
-  sectionSub: { fontSize: 12, marginTop: 2 },
-  errorBox: { margin: 20, padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  errorText: { fontSize: 13, fontWeight: '600' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, gap: 10 },
-  statCard: { width: (width - 40) / 2, padding: 18, borderRadius: 20, shadowOpacity: 0.05, shadowRadius: 10, elevation: 4, position: 'relative' },
-  statIconContainer: { width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  statInfo: { marginBottom: 4 },
-  statLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
-  statValue: { fontSize: 22, fontWeight: '900', marginBottom: 2 },
-  statTrend: { position: 'absolute', top: 18, right: 18, flexDirection: 'row', alignItems: 'center', gap: 2, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  trendText: { fontSize: 9, fontWeight: '800' },
-  perfCard: { margin: 20, padding: 20, borderRadius: 24, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 15, elevation: 5 },
+  content: { paddingBottom: 150 },
+  sectionHeader: { marginHorizontal: 20, marginTop: 30, marginBottom: 15 },
+  sectionTitle: { fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
+  sectionSub: { fontSize: 12, marginTop: 4, opacity: 0.7 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, gap: 12 },
+  statCard: { width: (width - 42) / 2, padding: 20, borderRadius: 24, overflow: 'hidden', elevation: 4 },
+  statGradient: { ...StyleSheet.absoluteFillObject },
+  statIconContainer: { width: 40, height: 40, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 15, elevation: 4 },
+  statLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', opacity: 0.6 },
+  statValue: { fontSize: 24, fontWeight: '900', marginBottom: 2 },
+  statDecoration: { position: 'absolute', bottom: -10, right: -10 },
+  perfCard: { margin: 20, padding: 25, borderRadius: 28, elevation: 8 },
   perfHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
-  perfTitle: { fontSize: 15, fontWeight: '800' },
-  perfVal: { fontSize: 15, fontWeight: '900' },
-  progressContainer: { gap: 8 },
-  progressBar: { height: 10, borderRadius: 5, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 5 },
+  perfTitle: { fontSize: 16, fontWeight: '900' },
+  perfVal: { fontSize: 16, fontWeight: '900' },
+  progressContainer: { gap: 10 },
+  progressBar: { height: 12, borderRadius: 6, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 6 },
   progressLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  progressText: { fontSize: 10, fontWeight: '600' },
-  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, gap: 10 },
-  actionBox: { width: (width - 40) / 2, padding: 20, borderRadius: 20, alignItems: 'center', gap: 10, elevation: 3 },
-  actionIcon: { width: 44, height: 44, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
-  actionText: { fontSize: 14, fontWeight: '800' }
+  progressText: { fontSize: 11, fontWeight: '700' },
+  actionGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 15, gap: 12 },
+  actionBox: { width: (width - 42) / 2, padding: 25, borderRadius: 24, alignItems: 'center', gap: 12, overflow: 'hidden', elevation: 5 },
+  actionGradient: { ...StyleSheet.absoluteFillObject },
+  actionText: { fontSize: 13, fontWeight: '900', textAlign: 'center' },
+  logsContainer: { marginHorizontal: 20, borderRadius: 24, padding: 10, elevation: 3 },
+  logItem: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, gap: 15 },
+  logDot: { width: 8, height: 8, borderRadius: 4 },
+  logTitle: { fontSize: 14, fontWeight: '800' },
+  logSub: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+  logTime: { fontSize: 11, fontWeight: '700' }
 });

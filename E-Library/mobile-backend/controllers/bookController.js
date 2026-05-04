@@ -45,7 +45,7 @@ const getBookById = async (req, res) => {
 // @access  Public
 const searchBooks = async (req, res) => {
   try {
-    const { q, category, author } = req.query;
+    const { q, category, author, isbn, year, sort } = req.query;
     if (!q) {
       return res.status(400).json({ message: 'Search query parameter "q" is required' });
     }
@@ -62,16 +62,31 @@ const searchBooks = async (req, res) => {
 
     // Add category filter if provided
     if (category && category.trim()) {
-      filter.category = category.trim();
+      filter.category = { $regex: category.trim(), $options: 'i' };
     }
 
     // Add author filter if provided
     if (author && author.trim()) {
-      filter.author = { $regex: author, $options: 'i' };
+      filter.author = { $regex: author.trim(), $options: 'i' };
+    }
+
+    // Add ISBN filter if provided
+    if (isbn && isbn.trim()) {
+      filter.isbn = { $regex: isbn.trim(), $options: 'i' };
+    }
+
+    // Add Year filter if provided
+    if (year && !isNaN(Number(year))) {
+      filter.publicationYear = Number(year);
     }
     
-    // Mapping $regex natively allows fuzzy partial searches
-    const books = await Book.find(filter);
+    // Handle Sorting
+    let sortOption = { createdAt: -1 };
+    if (sort === 'title') sortOption = { title: 1 };
+    if (sort === 'oldest') sortOption = { createdAt: 1 };
+    if (sort === 'year') sortOption = { publicationYear: -1 };
+    
+    const books = await Book.find(filter).sort(sortOption);
     
     res.json(books);
   } catch (error) {

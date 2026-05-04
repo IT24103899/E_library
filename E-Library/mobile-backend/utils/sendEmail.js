@@ -11,36 +11,32 @@ const sendEmail = async (options) => {
   }
 
   // 1) Create a transporter
-  const transporterConfig = process.env.EMAIL_SERVICE === 'gmail' 
-    ? {
-        service: 'gmail',
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-      }
-    : {
-        host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-        port: process.env.EMAIL_PORT || 465,
-        secure: process.env.EMAIL_SECURE === 'false' ? false : true,
-        auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASS,
-        },
-        tls: {
-          rejectUnauthorized: false
-        }
-      };
-
-  const transporter = nodemailer.createTransport(transporterConfig);
+  // We use a direct SMTP configuration which is more reliable than the "service" alias on cloud platforms
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: process.env.EMAIL_SECURE === 'true', // Default to false (587)
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+      // Do not fail on invalid certs (common issue with some SMTP proxies)
+      rejectUnauthorized: false
+    }
+  });
 
   // Verify connection configuration
   try {
-    await transporter.verify();
+    console.log(`📡 Attempting SMTP connection to ${process.env.EMAIL_HOST || 'smtp.gmail.com'} on port ${process.env.EMAIL_PORT || 587}...`);
+    await Promise.race([
+      transporter.verify(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('SMTP Verification Timeout (20s)')), 20000))
+    ]);
     console.log('✅ SMTP Transporter Verified');
   } catch (err) {
-    console.error('❌ SMTP Verification Failed:', err.message);
-    throw new Error(`Email verification failed: ${err.message}`);
+    console.warn('⚠️ SMTP Verification warning (attempting send anyway):', err.message);
+    // We don't throw here to allow a direct send attempt, which sometimes works even if verify() fails on cloud runners
   }
 
   // 2) Define the email options

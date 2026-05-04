@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
   ActivityIndicator, Alert, Image, Dimensions, Animated
@@ -6,16 +6,48 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { searchBooks, getSearchHistory, saveSearchHistory, clearSearchHistory, getRecommendationsByIdea } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
-
+import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { ScrollView, Modal } from 'react-native';
 const { width } = Dimensions.get('window');
+
+// Voice Search Safety Guard (Native module removed for Expo Go stability)
+const ExpoSpeechRecognitionModule = null;
+
+const GENRES = [
+  'All', 'Fiction', 'Fantasy', 'Mystery', 'Romance', 'Science', 
+  'History', 'Thriller', 'Biography', 'Horror', 'Poetry'
+];
+
+const YEAR_RANGES = [
+  { label: 'Newest', value: '2024' },
+  { label: '2020s', value: '2020' },
+  { label: '2010s', value: '2010' },
+  { label: 'Classics', value: '1900' }
+];
 
 export default function SearchScreen({ navigation }) {
   const { colors, dark } = useTheme();
+  const { user, refreshUser } = useAuth();
+
+  // Refresh premium status on focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (refreshUser) refreshUser().catch(e => console.log('Refresh failed', e));
+    }, [refreshUser])
+  );
+
+  const isPremium = user?.isPremium || 
+                    user?.role === 'admin' || 
+                    String(user?.plan).toUpperCase() === 'PREMIER' ||
+                    String(user?.subscriptionPlan).toUpperCase() === 'PREMIER';
   
   // Search States
   const [query, setQuery] = useState('');
   const [authorFilter, setAuthorFilter] = useState('');
   const [genreFilter, setGenreFilter] = useState('');
+  const [isbnFilter, setIsbnFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   const [results, setResults] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -27,6 +59,40 @@ export default function SearchScreen({ navigation }) {
   const [aiIdea, setAiIdea] = useState('');
   const [searchType, setSearchType] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
+
+  // Voice Search States
+  const [isListening, setIsListening] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const searchInputRef = useRef(null);
+
+  // Voice Search logic removed for Expo Go stability
+  useEffect(() => {
+    setIsListening(false);
+  }, []);
+
+  useEffect(() => {
+    if (isListening) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.5, duration: 800, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.stopAnimation();
+    }
+  }, [isListening, pulseAnim]);
+
+  const startVoiceSearch = () => {
+    Alert.alert(
+      'Search Guidance',
+      'For the best experience, please use the microphone button on your keyboard. This ensures your search is accurate and fast!'
+    );
+  };
+
+  const stopVoiceSearch = () => {
+    setIsListening(false);
+  };
 
   const loadHistory = useCallback(async () => {
     try {
@@ -46,6 +112,8 @@ export default function SearchScreen({ navigation }) {
       const params = { type: searchType, sort: sortBy };
       if (authorFilter.trim()) params.author = authorFilter.trim();
       if (genreFilter.trim()) params.category = genreFilter.trim();
+      if (isbnFilter.trim()) params.isbn = isbnFilter.trim();
+      if (yearFilter.trim()) params.year = yearFilter.trim();
       
       const res = await searchBooks(term, params);
       setResults(Array.isArray(res.data) ? res.data : []);
@@ -58,8 +126,8 @@ export default function SearchScreen({ navigation }) {
     }
   };
 
-  const handleAiSearch = async () => {
-    const idea = aiIdea.trim();
+  const handleAiSearch = async (val = aiIdea) => {
+    const idea = val.trim();
     if (!idea) return;
     setLoading(true);
     setHasSearched(true);
@@ -118,7 +186,12 @@ export default function SearchScreen({ navigation }) {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* ELITE HEADER */}
       <View style={[styles.header, { backgroundColor: dark ? colors.surface : colors.primary }]}>
-        <Text style={styles.headerTitle}>Search Hub</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Text style={styles.headerTitle}>Search Hub</Text>
+          <TouchableOpacity onPress={() => { setHasSearched(false); loadHistory(); }}>
+            <Ionicons name="time-outline" size={22} color="#fff" style={{ opacity: 0.8 }} />
+          </TouchableOpacity>
+        </View>
         <TouchableOpacity style={styles.qrBtn} onPress={() => navigation.navigate('QRScanner')}>
           <Ionicons name="qr-code-outline" size={20} color="#fff" />
         </TouchableOpacity>
@@ -142,7 +215,7 @@ export default function SearchScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView stickyHeaderIndices={[1]} showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 100 }}>
         {/* INPUT SECTION */}
         <View style={styles.inputSection}>
           {activeTab === 'ai' ? (
@@ -157,7 +230,7 @@ export default function SearchScreen({ navigation }) {
                 multiline
                 numberOfLines={3}
               />
-              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={handleAiSearch}>
+              <TouchableOpacity style={[styles.aiButton, { backgroundColor: colors.primary }]} onPress={() => handleAiSearch()}>
                 <Ionicons name="sparkles" size={18} color="#fff" />
                 <Text style={styles.aiButtonText}>Find Magic</Text>
               </TouchableOpacity>
@@ -167,6 +240,7 @@ export default function SearchScreen({ navigation }) {
               <View style={[styles.searchRow, { backgroundColor: dark ? colors.background : '#f1f5f9' }]}>
                 <Ionicons name="search" size={20} color={colors.textSecondary} />
                 <TextInput
+                  ref={searchInputRef}
                   style={[styles.manualInput, { color: colors.text }]}
                   placeholder="Title, Author, or ISBN..."
                   placeholderTextColor={colors.textSecondary}
@@ -174,6 +248,9 @@ export default function SearchScreen({ navigation }) {
                   onChangeText={setQuery}
                   onSubmitEditing={() => handleManualSearch()}
                 />
+                <TouchableOpacity onPress={startVoiceSearch} style={styles.voiceBtn}>
+                  <Ionicons name="mic" size={20} color={colors.primary} />
+                </TouchableOpacity>
                 <TouchableOpacity onPress={() => setShowFilters(!showFilters)}>
                   <Ionicons name={showFilters ? "chevron-up-circle" : "add-circle-outline"} size={24} color={colors.primary} />
                 </TouchableOpacity>
@@ -181,27 +258,165 @@ export default function SearchScreen({ navigation }) {
 
               {showFilters && (
                 <View style={styles.filterPanel}>
-                  <View style={styles.filterGroup}>
-                    <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
-                    <TextInput 
-                      style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
-                      placeholder="Any author" 
-                      value={authorFilter}
-                      onChangeText={setAuthorFilter}
-                    />
-                  </View>
-                  <View style={styles.filterGroup}>
-                    <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Genre</Text>
-                    <TextInput 
-                      style={[styles.filterInput, { color: colors.text, borderColor: colors.border }]} 
-                      placeholder="e.g. Fiction" 
-                      value={genreFilter}
-                      onChangeText={setGenreFilter}
-                    />
-                  </View>
-                  <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleManualSearch()}>
-                    <Text style={styles.applyBtnText}>Apply Advanced Search</Text>
-                  </TouchableOpacity>
+                  {!isPremium ? (
+                    <View style={[styles.premiumLocked, { backgroundColor: colors.primary + '10', borderColor: colors.primary + '30' }]}>
+                      <MaterialCommunityIcons name="crown" size={32} color={colors.primary} />
+                      <Text style={[styles.premiumTitle, { color: colors.text }]}>Premium Feature</Text>
+                      <Text style={[styles.premiumSub, { color: colors.textSecondary }]}>Advanced filters are reserved for our Elite members.</Text>
+                      <TouchableOpacity 
+                        style={[styles.upgradeBtn, { backgroundColor: colors.primary }]}
+                        onPress={() => navigation.navigate('Profile', { screen: 'Payment' })}
+                      >
+                        <Text style={styles.upgradeBtnText}>Upgrade Now</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <>
+                      {/* Author Section */}
+                      <View style={styles.filterGroup}>
+                        <View style={styles.labelRow}>
+                          <Ionicons name="person-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Author</Text>
+                        </View>
+                        <View style={styles.inputWrapper}>
+                          <TextInput 
+                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                            placeholder="Search by author name..." 
+                            placeholderTextColor={colors.textSecondary + '60'}
+                            value={authorFilter}
+                            onChangeText={setAuthorFilter}
+                          />
+                          {authorFilter.length > 0 && (
+                            <TouchableOpacity style={styles.clearBtn} onPress={() => setAuthorFilter('')}>
+                              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+
+                      {/* Genre Section with Chips */}
+                      <View style={styles.filterGroup}>
+                        <View style={styles.labelRow}>
+                          <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Select Genre</Text>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
+                          {GENRES.map(g => (
+                            <TouchableOpacity 
+                              key={g} 
+                              style={[
+                                styles.genreChip, 
+                                { backgroundColor: (genreFilter === g || (g === 'All' && !genreFilter)) ? colors.primary : colors.surface, 
+                                  borderColor: colors.border }
+                              ]}
+                              onPress={() => setGenreFilter(g === 'All' ? '' : g)}
+                            >
+                              <Text style={[styles.genreChipText, { color: (genreFilter === g || (g === 'All' && !genreFilter)) ? '#fff' : colors.textSecondary }]}>
+                                {g}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+
+                      <View style={styles.filterRow}>
+                        <View style={[styles.filterGroup, { flex: 1.2 }]}>
+                          <View style={styles.labelRow}>
+                            <Ionicons name="barcode-outline" size={14} color={colors.primary} />
+                            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>ISBN</Text>
+                          </View>
+                          <View style={styles.inputWrapper}>
+                            <TextInput 
+                              style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                              placeholder="ISBN-13" 
+                              placeholderTextColor={colors.textSecondary + '60'}
+                              value={isbnFilter}
+                              onChangeText={setIsbnFilter}
+                              keyboardType="numeric"
+                            />
+                            <TouchableOpacity style={styles.clearBtn} onPress={() => navigation.navigate('QRScanner')}>
+                              <Ionicons name="scan-outline" size={20} color={colors.primary} />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                        <View style={[styles.filterGroup, { flex: 0.8 }]}>
+                          <View style={styles.labelRow}>
+                            <Ionicons name="calendar-outline" size={14} color={colors.primary} />
+                            <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Year</Text>
+                          </View>
+                          <TextInput 
+                            style={[styles.filterInput, { color: colors.text, borderColor: colors.border, backgroundColor: dark ? colors.background : '#fff' }]} 
+                            placeholder="YYYY" 
+                            placeholderTextColor={colors.textSecondary + '60'}
+                            value={yearFilter}
+                            onChangeText={setYearFilter}
+                            keyboardType="numeric"
+                            maxLength={4}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Year Presets */}
+                      <View style={styles.filterGroup}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
+                          {YEAR_RANGES.map(yr => (
+                            <TouchableOpacity 
+                              key={yr.value} 
+                              style={[
+                                styles.yearChip, 
+                                { backgroundColor: yearFilter === yr.value ? colors.primary : colors.surface, 
+                                  borderColor: colors.border }
+                              ]}
+                              onPress={() => setYearFilter(yr.value)}
+                            >
+                              <Text style={[styles.yearChipText, { color: yearFilter === yr.value ? '#fff' : colors.textSecondary }]}>
+                                {yr.label}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </ScrollView>
+                      </View>
+
+                      <View style={styles.filterGroup}>
+                        <View style={styles.labelRow}>
+                          <Ionicons name="swap-vertical-outline" size={14} color={colors.primary} />
+                          <Text style={[styles.filterLabel, { color: colors.textSecondary }]}>Sort Results By</Text>
+                        </View>
+                        <View style={styles.sortOptions}>
+                          {[
+                            { id: 'relevance', icon: 'flash' },
+                            { id: 'title', icon: 'text' },
+                            { id: 'year', icon: 'calendar' },
+                            { id: 'oldest', icon: 'history' }
+                          ].map(opt => (
+                            <TouchableOpacity 
+                              key={opt.id}
+                              style={[
+                                styles.sortBtn, 
+                                sortBy === opt.id && { backgroundColor: colors.primary, borderColor: colors.primary }
+                              ]}
+                              onPress={() => setSortBy(opt.id)}
+                            >
+                              <MaterialCommunityIcons 
+                                name={opt.icon} 
+                                size={14} 
+                                color={sortBy === opt.id ? '#fff' : colors.textSecondary} 
+                                style={{ marginRight: 4 }}
+                              />
+                              <Text style={[styles.sortBtnText, { color: sortBy === opt.id ? '#fff' : colors.textSecondary }]}>
+                                {opt.id.charAt(0).toUpperCase() + opt.id.slice(1)}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      <TouchableOpacity style={[styles.applyBtn, { backgroundColor: colors.primary }]} onPress={() => handleManualSearch()}>
+                        <Ionicons name="search" size={20} color="#fff" style={{ marginRight: 8 }} />
+                        <Text style={styles.applyBtnText}>Search with Filters</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
                 </View>
               )}
             </View>
@@ -231,41 +446,87 @@ export default function SearchScreen({ navigation }) {
             </View>
           ) : (
             <View style={styles.historySection}>
-              {history.length > 0 && (
+              {history.length > 0 ? (
                 <View>
                   <View style={styles.historyHeader}>
                     <Text style={[styles.historyTitle, { color: colors.text }]}>Recent Activity</Text>
-                    <TouchableOpacity onPress={clearSearchHistory}>
+                    <TouchableOpacity onPress={async () => { await clearSearchHistory(); setHistory([]); }}>
                       <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Clear All</Text>
                     </TouchableOpacity>
                   </View>
                   <View style={styles.historyGrid}>
-                    {history.slice(0, 6).map((h, i) => (
-                      <TouchableOpacity 
-                        key={i} 
-                        style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                        onPress={() => {
-                          const term = h.term || h.searchQuery || h;
-                          setQuery(term);
-                          handleManualSearch(term);
-                        }}
-                      >
-                        <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-                        <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>{h.term || h.searchQuery || h}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    {history.slice(0, 10).map((h, i) => {
+                      const termValue = typeof h === 'string' ? h : (h.term || h.searchQuery || '');
+                      if (!termValue) return null;
+                      
+                      return (
+                        <TouchableOpacity 
+                          key={i} 
+                          style={[styles.historyChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                          onPress={() => {
+                            setAiIdea(termValue);
+                            setActiveTab('ai');
+                            // Removed automatic search to allow user to edit the text as requested
+                          }}
+                        >
+                          <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                          <Text style={[styles.chipText, { color: colors.textSecondary }]} numberOfLines={1}>{termValue}</Text>
+                          <TouchableOpacity 
+                            style={{ marginLeft: 4, padding: 2 }}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              setQuery(termValue);
+                              searchInputRef.current?.focus();
+                            }}
+                          >
+                            <Ionicons name="arrow-up-outline" size={12} color={colors.primary} style={{ transform: [{ rotate: '45deg' }] }} />
+                          </TouchableOpacity>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
+                </View>
+              ) : (
+                <View style={styles.noHistory}>
+                  <Ionicons name="search-outline" size={40} color={colors.border} />
+                  <Text style={[styles.noHistoryText, { color: colors.textSecondary }]}>No recent searches</Text>
                 </View>
               )}
             </View>
           )}
         </View>
       </ScrollView>
+
+      {/* VOICE SEARCH MODAL */}
+      <Modal visible={isListening} transparent animationType="fade">
+        <View style={styles.voiceOverlay}>
+          <View style={[styles.voiceCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.voiceTitle, { color: colors.text }]}>Listening...</Text>
+            <Text style={[styles.voiceSub, { color: colors.textSecondary }]}>Tell me the book title or author</Text>
+            
+            <View style={styles.pulseContainer}>
+              <Animated.View style={[styles.pulseCircle, { 
+                backgroundColor: colors.primary + '20',
+                transform: [{ scale: pulseAnim }]
+              }]} />
+              <TouchableOpacity style={[styles.micBig, { backgroundColor: colors.primary }]} onPress={stopVoiceSearch}>
+                <Ionicons name="mic" size={40} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.voiceQuery, { color: colors.primary }]}>{query || '...'}</Text>
+
+            <TouchableOpacity style={[styles.voiceCancel, { borderColor: colors.border }]} onPress={stopVoiceSearch}>
+              <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
-import { ScrollView } from 'react-native-gesture-handler';
+
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -288,8 +549,17 @@ const styles = StyleSheet.create({
   filterGroup: { gap: 6 },
   filterLabel: { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginLeft: 4 },
   filterInput: { borderWidth: 1, borderRadius: 12, padding: 12, fontSize: 14 },
-  applyBtn: { padding: 16, borderRadius: 16, alignItems: 'center' },
-  applyBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  applyBtn: { padding: 16, borderRadius: 16, alignItems: 'center', flexDirection: 'row', justifyContent: 'center' },
+  applyBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 },
+  genreScroll: { marginTop: 4 },
+  genreChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, borderWidth: 1, marginRight: 8 },
+  genreChipText: { fontSize: 13, fontWeight: '700' },
+  sortBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: '#ddd', flexDirection: 'row', alignItems: 'center' },
+  inputWrapper: { position: 'relative', justifyContent: 'center' },
+  clearBtn: { position: 'absolute', right: 12 },
+  yearChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, marginRight: 8 },
+  yearChipText: { fontSize: 11, fontWeight: '700' },
   resultsContainer: { paddingHorizontal: 20 },
   resultsHeader: { marginBottom: 15 },
   resultsCount: { fontSize: 13, fontWeight: '700' },
@@ -314,5 +584,26 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 12, fontWeight: '600', maxWidth: 100 },
   emptyContainer: { alignItems: 'center', paddingVertical: 60, opacity: 0.8 },
   emptyTitle: { fontSize: 18, fontWeight: '900', marginTop: 15 },
-  emptySub: { fontSize: 13, textAlign: 'center', marginTop: 8, paddingHorizontal: 40 }
+  emptySub: { fontSize: 13, textAlign: 'center', marginTop: 8, paddingHorizontal: 40 },
+  premiumLocked: { padding: 25, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed' },
+  premiumTitle: { fontSize: 18, fontWeight: '900', marginTop: 10 },
+  premiumSub: { fontSize: 13, textAlign: 'center', marginTop: 5, marginBottom: 15 },
+  upgradeBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 },
+  upgradeBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  noHistory: { alignItems: 'center', paddingVertical: 20, opacity: 0.5 },
+  noHistoryText: { fontSize: 14, marginTop: 8, fontWeight: '600' },
+  filterRow: { flexDirection: 'row', gap: 10 },
+  sortOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 5 },
+  sortBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' },
+  sortBtnText: { fontSize: 11, fontWeight: '700' },
+  voiceBtn: { padding: 5, marginRight: 5 },
+  voiceOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
+  voiceCard: { width: '85%', padding: 40, borderRadius: 32, alignItems: 'center', gap: 20 },
+  voiceTitle: { fontSize: 24, fontWeight: '900' },
+  voiceSub: { fontSize: 15, textAlign: 'center' },
+  pulseContainer: { width: 120, height: 120, justifyContent: 'center', alignItems: 'center', marginVertical: 20 },
+  pulseCircle: { position: 'absolute', width: 100, height: 100, borderRadius: 50 },
+  micBig: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', elevation: 10, shadowOpacity: 0.3, shadowRadius: 10 },
+  voiceQuery: { fontSize: 18, fontWeight: '700', textAlign: 'center', fontStyle: 'italic' },
+  voiceCancel: { marginTop: 20, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 16, borderWidth: 1 }
 });

@@ -9,35 +9,66 @@ const resolveBookId = (id) => {
 
 const updateActivity = async (req, res) => {
   try {
-    // Handle case where user doesn't exist in database
     if (!req.user) {
       return res.status(401).json({ message: 'User not found. Please log in again.' });
     }
 
-    const { bookId: rawBookId, pageNumber, page } = req.body;
-    const finalPage = pageNumber !== undefined ? pageNumber : page;
+    const { bookId: rawBookId, pageNumber, page, totalPages: rawTotalPages } = req.body;
+    const finalPage = parseInt(pageNumber !== undefined ? pageNumber : page) || 0;
+    const totalPages = parseInt(rawTotalPages) || 0;
     const bookId = resolveBookId(rawBookId);
     
-    if (!bookId || finalPage === undefined) {
-      return res.status(400).json({ message: 'Book ID and page context required' });
+    if (!bookId) {
+      return res.status(400).json({ message: 'Book ID required' });
+    }
+
+    // Safety check: pageNumber should not exceed totalPages if totalPages is known
+    let validatedPage = finalPage;
+    if (totalPages > 0 && finalPage > totalPages) {
+      console.log(`⚠️ Capping pageNumber ${finalPage} to totalPages ${totalPages}`);
+      validatedPage = totalPages;
     }
 
     // Consolidate: find any activity for this user and book
     let activity = await Activity.findOne({ user: req.user._id, bookId });
 
     if (activity) {
-      activity.pageNumber = finalPage;
+      activity.pageNumber = validatedPage;
+      if (totalPages > 0) activity.set('totalPages', totalPages); // Save to mixed field
       activity.lastReadAt = Date.now();
       await activity.save();
     } else {
       activity = await Activity.create({
         user: req.user._id,
         bookId,
-        pageNumber: finalPage
+        pageNumber: validatedPage,
+        totalPages: totalPages > 0 ? totalPages : undefined
       });
     }
+
+    // UPDATE BOOK RECORD: If the book is missing totalPages, update it now that we know it from the reader
+    if (totalPages > 0) {
+      const isObjectId = typeof bookId === 'string' && bookId.length === 24;
+      const isNumericId = !isNaN(Number(bookId));
+
+      const queryFilters = [];
+      if (isObjectId) queryFilters.push({ _id: bookId });
+      if (isNumericId) queryFilters.push({ legacyId: Number(bookId) });
+
+      if (queryFilters.length > 0) {
+        const book = await Book.findOne({ $or: queryFilters });
+        
+        if (book && (!book.totalPages || book.totalPages !== totalPages)) {
+          book.totalPages = totalPages;
+          await book.save();
+          console.log(`📚 Updated Book "${book.title}" totalPages to ${totalPages}`);
+        }
+      }
+    }
+
     res.json(activity);
   } catch (error) {
+    console.error('❌ [updateActivity] Error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

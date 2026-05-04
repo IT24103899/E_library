@@ -70,6 +70,16 @@ app.use('/api/v1/feedback', feedbackRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/payments', paymentRoutes);
 
+// Root Route (Welcome/Health Check)
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Welcome to E-Library Mobile API',
+    status: 'Server is active',
+    version: '2.1'
+  });
+});
+
 // Feedback routes migrated to /api/v1/feedback (routes/feedbackRoutes.js)
 
 // Basic Health Check Route
