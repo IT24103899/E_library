@@ -45,10 +45,7 @@ const getBookById = async (req, res) => {
 // @access  Public
 const searchBooks = async (req, res) => {
   try {
-    const { q, category, author, isbn, year, sort } = req.query;
-    if (!q) {
-      return res.status(400).json({ message: 'Search query parameter "q" is required' });
-    }
+    const { q = '', category, author, isbn, year, sort } = req.query;
     
     // Build filter object
     const filter = {
