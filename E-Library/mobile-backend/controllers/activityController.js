@@ -191,7 +191,8 @@ const getReadingProgress = async (req, res) => {
       return res.status(401).json({ message: 'User not found. Please log in again.' });
     }
 
-    const { bookId } = req.params;
+    const { bookId: rawBookId } = req.params;
+    const bookId = resolveBookId(rawBookId);
     const activity = await Activity.findOne({ user: req.user._id, bookId });
     if (!activity) return res.json({ pageNumber: 0 });
     res.json({ pageNumber: activity.pageNumber || 0 });

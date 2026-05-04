@@ -3,6 +3,7 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Bookmark = require('../models/Bookmark');
 const Highlight = require('../models/Highlight');
+const Rating = require('../models/Rating');
 const User = require('../models/User');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -156,6 +157,38 @@ router.delete('/highlights/:id', async (req, res) => {
     const highlight = await Highlight.findByIdAndDelete(req.params.id);
     if (!highlight) return res.status(404).json({ message: 'Highlight not found' });
     res.json({ message: 'Highlight deleted' });
+  } catch (e) {
+    res.status(500).json({ message: 'Server error', error: e.message });
+  }
+});
+
+// ─── Ratings ─────────────────────────────────────────────────────────────────
+router.get('/rating', async (req, res) => {
+  try {
+    const { userId, bookId } = req.query;
+    const mongoUserId = await resolveMongoUserId(userId);
+    if (!mongoUserId) return res.status(400).json({ message: 'Invalid userId' });
+    
+    const rating = await Rating.findOne({ user: mongoUserId, bookId: resolveBookId(bookId) });
+    res.json(rating || { rating: 0 });
+  } catch (e) {
+    res.status(500).json({ message: 'Server error', error: e.message });
+  }
+});
+
+router.post('/rating', async (req, res) => {
+  try {
+    const { userId, bookId, rating } = req.body;
+    const mongoUserId = await resolveMongoUserId(userId);
+    if (!mongoUserId) return res.status(400).json({ message: 'Invalid userId' });
+
+    const updatedRating = await Rating.findOneAndUpdate(
+      { user: mongoUserId, bookId: resolveBookId(bookId) },
+      { rating: Number(rating) },
+      { upsert: true, new: true }
+    );
+
+    res.json(updatedRating);
   } catch (e) {
     res.status(500).json({ message: 'Server error', error: e.message });
   }
