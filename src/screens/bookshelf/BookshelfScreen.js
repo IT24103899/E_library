@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 
 
-const SHELVES = [
+const DEFAULT_SHELVES = [
   { id: 'reading', label: 'Reading Now', color: '#12c2e9', icon: 'book' },
   { id: 'favourites', label: 'Favourites', color: '#f64f59', icon: 'heart' },
   { id: 'wishlist', label: 'Wishlist', color: '#c471ed', icon: 'star' }
@@ -22,11 +22,28 @@ export default function BookshelfScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('reading');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [showAddList, setShowAddList] = useState(false);
+  const [newListName, setNewListName] = useState('');
+  const [dynamicShelves, setDynamicShelves] = useState(DEFAULT_SHELVES);
 
   const fetchData = useCallback(async () => {
     try {
       const res = await getBookshelf();
-      setBookshelf(res.data || {});
+      const data = res.data || {};
+      setBookshelf(data);
+      
+      // Generate dynamic shelves from data keys
+      const customKeys = Object.keys(data).filter(key => !DEFAULT_SHELVES.some(s => s.id === key));
+      const newShelves = [...DEFAULT_SHELVES];
+      customKeys.forEach(key => {
+        newShelves.push({
+          id: key,
+          label: key.charAt(0).toUpperCase() + key.slice(1),
+          color: '#8b5cf6', // Generic color for custom lists
+          icon: 'folder'
+        });
+      });
+      setDynamicShelves(newShelves);
     } catch (_) {}
     setLoading(false);
     setRefreshing(false);
@@ -57,7 +74,27 @@ export default function BookshelfScreen({ navigation }) {
   };
 
   const books = bookshelf[activeTab] || [];
-  const activeColor = SHELVES.find(s => s.id === activeTab)?.color || '#333';
+  const activeColor = dynamicShelves.find(s => s.id === activeTab)?.color || '#333';
+
+  const handleCreateList = () => {
+    if (!newListName.trim()) return;
+    const listId = newListName.trim().toLowerCase();
+    if (dynamicShelves.some(s => s.id === listId)) {
+        Alert.alert("Notice", "List already exists");
+        return;
+    }
+    // Since we don't have a backend "list" collection, we just set the tab and let it be empty.
+    // The next time we add a book, it will be permanent.
+    setDynamicShelves([...dynamicShelves, {
+        id: listId,
+        label: newListName.trim(),
+        color: '#8b5cf6',
+        icon: 'folder'
+    }]);
+    setActiveTab(listId);
+    setShowAddList(false);
+    setNewListName('');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -71,8 +108,8 @@ export default function BookshelfScreen({ navigation }) {
         <Text style={styles.headerSub}>Managing your personal reading collection</Text>
       </LinearGradient>
 
-      <View style={styles.tabContainer}>
-        {SHELVES.map(shelf => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll} contentContainerStyle={styles.tabContainer}>
+        {dynamicShelves.map(shelf => (
           <TouchableOpacity
             key={shelf.id}
             style={[
@@ -88,7 +125,14 @@ export default function BookshelfScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+        <TouchableOpacity
+          style={[styles.tab, { backgroundColor: colors.surface, borderStyle: 'dashed', borderColor: colors.primary }]}
+          onPress={() => setShowAddList(true)}
+        >
+          <Ionicons name="add" size={18} color={colors.primary} />
+          <Text style={[styles.tabText, { color: colors.primary }]}>New List</Text>
+        </TouchableOpacity>
+      </ScrollView>
 
 
         {loading ? (
@@ -140,8 +184,47 @@ export default function BookshelfScreen({ navigation }) {
                 }
             />
         )}
+
+        <AddListModal 
+            visible={showAddList}
+            onClose={() => setShowAddList(false)}
+            onAdd={handleCreateList}
+            value={newListName}
+            onChange={setNewListName}
+            colors={colors}
+        />
     </View>
   );
+}
+
+import { Modal, TextInput } from 'react-native';
+
+function AddListModal({ visible, onClose, onAdd, value, onChange, colors }) {
+    return (
+        <Modal visible={visible} transparent animationType="fade">
+            <View style={styles.modalOverlay}>
+                <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>Create New Wishlist</Text>
+                    <TextInput 
+                        style={[styles.modalInput, { color: colors.text, borderColor: colors.border }]}
+                        placeholder="e.g. My Favorites 2024"
+                        placeholderTextColor={colors.textSecondary}
+                        value={value}
+                        onChangeText={onChange}
+                        autoFocus
+                    />
+                    <View style={styles.modalButtons}>
+                        <TouchableOpacity style={styles.modalCancel} onPress={onClose}>
+                            <Text style={styles.modalCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.modalConfirm, { backgroundColor: colors.primary }]} onPress={onAdd}>
+                            <Text style={styles.modalConfirmText}>Create</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        </Modal>
+    );
 }
 
 const styles = StyleSheet.create({
@@ -159,11 +242,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1 },
   headerSub: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginTop: 6, fontWeight: '600' },
   
-  tabContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: -32, gap: 10, paddingHorizontal: 15 },
-  tab: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 20, borderRadius: 20, borderWidth: 2, shadowOpacity: 0.15, shadowRadius: 10, elevation: 6 },
-  tabText: { marginLeft: 8, fontSize: 14, fontWeight: '900' },
+  tabScroll: { marginTop: -32, maxHeight: 65 },
+  tabContainer: { flexDirection: 'row', gap: 10, paddingHorizontal: 25, alignItems: 'center' },
+  tab: { flexDirection: 'row', alignItems: 'center', height: 48, paddingHorizontal: 20, borderRadius: 20, borderWidth: 2, shadowOpacity: 0.15, shadowRadius: 10, elevation: 6 },
+  tabText: { marginLeft: 8, fontSize: 13, fontWeight: '900' },
   
-  list: { padding: 25, paddingBottom: 130, paddingTop: 30 },
+  list: { padding: 25, paddingBottom: 130, paddingTop: 20 },
   card: { flexDirection: 'row', padding: 20, borderRadius: 32, marginBottom: 18, shadowOpacity: 0.1, shadowRadius: 20, elevation: 8 },
   cover: { width: 85, height: 125, borderRadius: 18, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10, elevation: 5 },
   coverPlaceholder: { width: 85, height: 125, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
@@ -179,5 +263,15 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 40 },
   emptyTitle: { fontSize: 22, fontWeight: '900', marginTop: 25, textAlign: 'center' },
   exploreBtn: { paddingHorizontal: 35, paddingVertical: 18, borderRadius: 24, marginTop: 30, shadowOpacity: 0.3, shadowRadius: 15, elevation: 8 },
-  exploreText: { color: '#fff', fontWeight: '900', fontSize: 17, letterSpacing: 0.5 }
+  exploreText: { color: '#fff', fontWeight: '900', fontSize: 17, letterSpacing: 0.5 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalCard: { width: '80%', padding: 30, borderRadius: 30 },
+  modalTitle: { fontSize: 20, fontWeight: '900', marginBottom: 20 },
+  modalInput: { borderWidth: 1, borderRadius: 15, padding: 15, fontSize: 16, marginBottom: 25 },
+  modalButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 15 },
+  modalCancel: { padding: 10 },
+  modalCancelText: { fontWeight: '800', color: '#ef4444' },
+  modalConfirm: { paddingHorizontal: 25, paddingVertical: 12, borderRadius: 15 },
+  modalConfirmText: { color: '#fff', fontWeight: '900' }
 });

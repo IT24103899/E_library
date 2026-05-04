@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert
+  View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Alert, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { addToBookshelf } from '../../services/api';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -14,18 +15,43 @@ export default function BookDetailScreen({ route, navigation }) {
   const { colors, dark } = useTheme();
   const [adding, setAdding] = useState(false);
   const [showListPicker, setShowListPicker] = useState(false);
+  const [customLists, setCustomLists] = useState([]);
+  const [showNewListInput, setShowNewListInput] = useState(false);
+  const [newListName, setNewListName] = useState('');
+
+  React.useEffect(() => {
+    const fetchLists = async () => {
+      try {
+        const res = await api.get('bookshelf');
+        const data = res.data || {};
+        const defaults = ['reading', 'favourites', 'wishlist'];
+        const custom = Object.keys(data).filter(k => !defaults.includes(k));
+        setCustomLists(custom);
+      } catch (_) {}
+    };
+    fetchLists();
+  }, []);
 
   const handleAddToBookshelf = async (listType) => {
+    const finalType = listType || newListName.trim().toLowerCase();
+    if (!finalType) return;
+
     setAdding(true);
     setShowListPicker(false);
+    setShowNewListInput(false);
     try {
-      await addToBookshelf(book._id, listType);
-      Alert.alert('📖 Added!', `"${book.title}" added to your ${listType}.`);
+      await addToBookshelf(book._id, finalType);
+      Alert.alert('📖 Added!', `"${book.title}" added to your ${finalType}.`);
+      // Update custom lists if it was a new one
+      if (!['favourites', 'reading', 'wishlist', ...customLists].includes(finalType)) {
+          setCustomLists([...customLists, finalType]);
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Failed to add to bookshelf';
       Alert.alert('Notice', msg);
     } finally {
       setAdding(false);
+      setNewListName('');
     }
   };
 
@@ -130,26 +156,63 @@ export default function BookDetailScreen({ route, navigation }) {
       {/* List picker modal */}
       {showListPicker && (
         <View style={styles.pickerOverlay}>
-          <View style={styles.pickerCard}>
-            <Text style={styles.pickerTitle}>Add to which list?</Text>
-            {['favourites', 'reading', 'wishlist'].map((list) => (
-              <TouchableOpacity
-                key={list}
-                style={styles.pickerOption}
-                onPress={() => handleAddToBookshelf(list)}
-              >
-                <Ionicons
-                  name={list === 'favourites' ? 'heart-outline' : list === 'reading' ? 'glasses-outline' : 'time-outline'}
-                  size={20} color="#1e3a5f"
-                />
-                <Text style={styles.pickerOptionText}>{list.charAt(0).toUpperCase() + list.slice(1)}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={[styles.pickerCard, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.pickerTitle, { color: colors.text }]}>Add to which list?</Text>
+            
+            <ScrollView style={{ maxHeight: 300 }}>
+                {['reading', 'favourites', 'wishlist', ...customLists].map((list) => (
+                <TouchableOpacity
+                    key={list}
+                    style={[styles.pickerOption, { borderColor: colors.border }]}
+                    onPress={() => handleAddToBookshelf(list)}
+                >
+                    <Ionicons
+                    name={list === 'favourites' ? 'heart' : list === 'reading' ? 'book' : list === 'wishlist' ? 'star' : 'folder'}
+                    size={20} color={colors.primary}
+                    />
+                    <Text style={[styles.pickerOptionText, { color: colors.text }]}>{list.charAt(0).toUpperCase() + list.slice(1)}</Text>
+                </TouchableOpacity>
+                ))}
+
+                <TouchableOpacity 
+                    style={[styles.pickerOption, { borderColor: colors.border, borderStyle: 'dashed' }]}
+                    onPress={() => setShowNewListInput(true)}
+                >
+                    <Ionicons name="add-circle" size={20} color={colors.primary} />
+                    <Text style={[styles.pickerOptionText, { color: colors.primary }]}>Add to new list...</Text>
+                </TouchableOpacity>
+            </ScrollView>
+
             <TouchableOpacity style={styles.pickerCancel} onPress={() => setShowListPicker(false)}>
               <Text style={styles.pickerCancelText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
+      )}
+
+      {/* New List Input Modal */}
+      {showNewListInput && (
+          <View style={styles.pickerOverlay}>
+              <View style={[styles.pickerCard, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.pickerTitle, { color: colors.text }]}>New Wishlist Name</Text>
+                  <TextInput 
+                    style={[styles.newListInput, { color: colors.text, borderColor: colors.border }]}
+                    placeholder="e.g. Summer Reading"
+                    placeholderTextColor={colors.textSecondary}
+                    value={newListName}
+                    onChangeText={setNewListName}
+                    autoFocus
+                  />
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity style={[styles.modalBtn, { flex: 1, backgroundColor: colors.border }]} onPress={() => setShowNewListInput(false)}>
+                        <Text style={{ fontWeight: '800', color: colors.text }}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.modalBtn, { flex: 2, backgroundColor: colors.primary }]} onPress={() => handleAddToBookshelf()}>
+                        <Text style={{ fontWeight: '900', color: '#fff' }}>Add Book</Text>
+                    </TouchableOpacity>
+                  </View>
+              </View>
+          </View>
       )}
     </View>
   );
@@ -201,10 +264,12 @@ const styles = StyleSheet.create({
   editBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
 
   pickerOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end', zIndex: 100 },
-  pickerCard: { backgroundColor: '#fff', borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 35, paddingBottom: 50 },
-  pickerTitle: { fontSize: 20, fontWeight: '900', color: '#0f172a', marginBottom: 25, textAlign: 'center' },
-  pickerOption: { flexDirection: 'row', alignItems: 'center', gap: 15, paddingVertical: 18, borderBottomWidth: 1, borderColor: '#f1f5f9' },
-  pickerOptionText: { fontSize: 16, color: '#1e293b', fontWeight: '800' },
+  pickerCard: { borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 35, paddingBottom: 50 },
+  pickerTitle: { fontSize: 20, fontWeight: '900', marginBottom: 25, textAlign: 'center' },
+  pickerOption: { flexDirection: 'row', alignItems: 'center', gap: 15, paddingVertical: 18, borderBottomWidth: 1 },
+  pickerOptionText: { fontSize: 16, fontWeight: '800' },
   pickerCancel: { paddingVertical: 15, alignItems: 'center', marginTop: 15 },
   pickerCancelText: { color: '#ef4444', fontWeight: '900', fontSize: 16 },
+  newListInput: { borderWidth: 1, borderRadius: 15, padding: 15, fontSize: 16, marginBottom: 20 },
+  modalBtn: { paddingVertical: 15, borderRadius: 15, alignItems: 'center', justifyContent: 'center' }
 });
